@@ -32,7 +32,7 @@ public class Timestamp implements Comparable<Timestamp> {
 			throw new IllegalArgumentException("Time remaining was negative.");
 		} else if(quar <= 4 && time > 720){
 			throw new IllegalArgumentException("There was greater than 12 minutes in the quarter.");
-		} else if(time > 300){
+		} else if(quar > 4 && time > 300){
 			throw new IllegalArgumentException("There was greater than 5 minutes in the overtime period.");
 		}
 		quarter = quar;
@@ -51,7 +51,7 @@ public class Timestamp implements Comparable<Timestamp> {
 			throw new IllegalStateException("Time remaining was negative.");
 		} else if(quarter <= 4 && timeRemaining > 720){
 			throw new IllegalStateException("There was greater than 12 minutes in the quarter.");
-		} else if(timeRemaining > 300){
+		} else if(quarter > 4 && timeRemaining > 300){
 			throw new IllegalStateException("There was greater than 5 minutes in the overtime period.");
 		}
 	}
@@ -116,7 +116,7 @@ public class Timestamp implements Comparable<Timestamp> {
 	@return a String representing this Timestamp.
 	*/
 	public String toString(){
-		String ordinal = "";
+		String ordinal;
 		if(quarter == 1){
 			ordinal = "1st";
 		} else if(quarter == 2){
@@ -128,6 +128,6 @@ public class Timestamp implements Comparable<Timestamp> {
 		} else {
 			ordinal = (quarter - 4) + "OT";
 		}
-		return (timeRemaining/60) + ":" + (timeRemaining%60) + " " + ordinal;
+		return ordinal + " " + (timeRemaining/60) + ":" + (String.format("%02d", timeRemaining%60));
 	}
 }

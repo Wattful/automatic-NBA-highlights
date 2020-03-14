@@ -1,42 +1,54 @@
 package thybulle.misc;
 
-import java.util.logging.*;
+import java.io.PrintStream;
+
+/**Class representing a simple logging interface.
+ * Messages are output to a PrintStream which is set at creation time.
+ * @author Owen Kulik
+ */
 
 public class Logging {
-	private final Logger logging;
-
-	/**Constructs a Logging with the given name.
-	@param name The Logging's name.
-	*/
-	public Logging(String name){
-		logging = Logger.getLogger(name);
+	private final PrintStream logging;
+	
+	/**Constructs a Logging without an output. Calls to this Logging will result in nothing.
+	 */
+	public Logging() {
+		logging = null;
 	}
+		
 
-	/**Adds the given handler to this logger.
-	@param h The handler to add.
+	/**Constructs a Logging with the given PrintStream.
+	@param ps the PrintStream to use.
 	*/
-	public void addHandler(Handler h){
-		logging.addHandler(h);
+	public Logging(PrintStream ps){
+		logging = ps;
 	}
-
+	
+	//Outputs the given message.
+	private void log(String message) {
+		if(logging != null) {
+			logging.print(message);
+		}
+	}
+	
 	/**Logs the given message with level info.
 	@param message The message to log.
 	*/
 	public void info(String message){
-		logging.log(Level.INFO, message);
+		log("INFO: " + message);
 	}
 
 	/**Logs the given message with level warning.
 	@param message The message to log.
 	*/
 	public void warning(String message){
-		logging.log(Level.WARNING, message);
+		log("WARNING: " +  message);
 	}
 
 	/**Logs the given message with level severe.
 	@param message The message to log.
 	*/
 	public void error(String message){
-		logging.log(Level.SEVERE, message);
+		log("ERROR: " + message);
 	}
 }

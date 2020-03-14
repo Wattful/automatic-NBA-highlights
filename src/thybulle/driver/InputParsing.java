@@ -15,8 +15,7 @@ Input determines which games to use as an input dataset, as well as what constra
 This class parses this input and returns it to the caller.<br>
 The finished product will include all plays in the dataset that satisfy the given constraints.<br>
 Input is formatted as a JSON object.<br>
-This object has two parsing methods: parseDataset and parseConstraints.<br>
-parseDataset returns a collection of games to include in the dataset, and when parsing it looks for the following keys:
+The JSON object should have four keys, each of which are mandatory:
 <ul>
 	<li>playsrc - Mandatory key. An integer representing which primary source to get play-by-play data from.
 		Currently there are is only one source:
@@ -31,8 +30,8 @@ parseDataset returns a collection of games to include in the dataset, and when p
 			<li>Dates - can be represented as either one date or two dates. <br>
 			One date includes all games from that day, while two dates includes all games from between those dates, inclusive.<br>
 			Dates are represented in MM/DD/YYYY format, with multiple dates separated by a dash.<br>
-			For example, if one wants to include games only on January 7, 2020, the String would be {@code "1/7/2020"}.<br>
-			If one wanted to include games from December 30, 2019 to January 6, 2020, the String would be {@code 12/30/2019-1/6/2020}.
+			For example, if one wants to include games only on January 7, 2020, the String would be {@code "01/07/2020"}.<br>
+			If one wanted to include games from December 30, 2019 to January 6, 2020, the String would be {@code 12/30/2019-01/06/2020}.
 			</li>
 			<li>Seasons - includes all games in certain seasons.<br>
 				A season is represented as two years separated by a dash, followed by multiple letters specifying which parts of the season to include.<br>
@@ -42,12 +41,12 @@ parseDataset returns a collection of games to include in the dataset, and when p
 					<li>p - playoffs, not including the NBA finals</li>
 					<li>f - NBA finals</li>
 					<li>e - preseason</li>
-					<li>a - all-star game, and other exhibition games (such as the rising stars challenge) 
+					<li>a - all-star game and the rising stars challenge
 						(Note that the only current source - stats.nba.com, does NOT have video for all star games).</li>
 				</ul>
 				The order and case of the letters do not matter.<br>
 				For example, {@code "2019-2020r"} Includes regular season games from the 2019-20 season.<br>
-				{@code "2016-2017pe"} includes playoff and preseason games from the 2016-17 season.<br>
+				{@code "2016-2017pef"} includes playoff and preseason games from the 2016-17 season.<br>
 				If one wishes to include multiple consecutive seasons, they can put the first year as the first year of the starting season, 
 				and the second year as the last year of the final season.<br>
 				For example, {@code "2015-2019ra"} includes regular season and all-star games from the 2015-16 season to the 2018-19 season.
@@ -62,11 +61,6 @@ parseDataset returns a collection of games to include in the dataset, and when p
 		If this key is not included, games from all teams will be included in the dataset.<br>
 		Note that for simplicity, all-star games are affected by this limit.
 	</li>
-</ul>
-<br>
-parseConstraints returns a collection of constraints to use when constructing the video.<br>
-It looks for the following keys:
-<ul>
 	<li>constraints - Mandatory key. An array of constraints. Each constraint is represented as either a string or an object with a single key.<br>
 		All constraints specified must be satisfied by a play to be included in the final video.<br>
 		The constraints are as follows:
@@ -138,7 +132,6 @@ It looks for the following keys:
 	</li>
 </ul>
 <br>
-Each method ignores keys not specified here. Therefore the user can include both JSON objects in the same file if they wish.
 */
 
 //TODO: Fill out season dates. 
@@ -147,14 +140,15 @@ public class InputParsing {
 	private static final String separator = "\\s*\\-\\s*";
 
 	private static final List<String> quarterNames = List.of("1st", "2nd", "3rd", "4th");
-	private static final String timestampPattern = "\\d\\d:\\d\\d\\s+\\d\\w\\w";
+	private static final String timestampPattern = "\\d{1,2}:\\d\\d\\s+\\d\\w\\w";
 	private static final String timeIntervalPattern = timestampPattern + separator + timestampPattern;
 
 	private static final String datePattern = "\\d\\d/\\d\\d/\\d\\d\\d\\d";
 	private static final String dateIntervalPattern = datePattern + separator + datePattern;
 	private static final String yearPattern = "\\d\\d\\d\\d";
 	private static final String yearIntervalPattern = yearPattern + separator + yearPattern;
-	private static final String seasonPattern = yearIntervalPattern + "\\w+";
+	private static final String seasonFormatPattern = "[\\w&&[\\D]]+";
+	private static final String seasonPattern = yearIntervalPattern + seasonFormatPattern;
 
 	//Lists of dates of the start and end of each year's preseason, regular season, all-star weekend, and playoffs.
 	//BaseYear is the first season with data, no earlier seasons can be used.
@@ -210,48 +204,52 @@ public class InputParsing {
 		new Pair<LocalDate, LocalDate>(LocalDate.of(2019, 5, 30), LocalDate.of(2019, 6, 15)),
 		new Pair<LocalDate, LocalDate>(LocalDate.of(2020, 6, 4), LocalDate.of(2020, 6, 21))
 	);
+	
+	private InputParsing(){}
+	
+	/**Parses the given file and returns the game Source specified by the playsrc key.
+	 * @param inputFile Path to the input file
+	 * @throws IOException If an IO error occurs.
+	 * @throws NullPointerException if inputFile is null.
+	 * @throws JSONException if the input file is not a JSON file, or if the JSON does not meet the standards described above.
+	 * @return the game Source specified by the playsrc key.
+	 */
+	public static Game.Source parseSource(String inputFile) throws IOException {
+		return parseSource(new JSONObject(Files.readString(Path.of(inputFile))).getInt("playsrc"));
+	}
+	
+	/**Returns the source corresponding to the given int according to the above specification.
+	 * @param src int corresponding to a source.
+	 * @throws JSONException if the input does not correspond to a source.
+	 * @return The Game Source corresponding to the given int.
+	 */
+	public static Game.Source parseSource(int src){
+		if(src == 0){
+			return Game.Source.NBA_ADVANCED_STATS;
+		} else {
+			throw new JSONException("Unrecognized play-by-play source: " + src);
+		}
+	}
 
-	/**Parses the given file according to the specification above, and returns the specified Game Source and a list of GameInfos representing the dataset.
+	/**Parses the given file and returns a collection of pairs of dates.<br>
+	 * Each pair indicates that games between these dates, inclusive, should be included.
 	@param inputFile Path to the input file.
 	@throws NullPointerException if inputFile is null.
 	@throws IOException if an IO error occurs.
 	@throws JSONException if the input file is not a JSON file, or if the JSON does not meet the standards described above.
-	@return the specified Game Source and a list of GameInfos representing the dataset.
+	@return a collection of pairs of dates indicating which games should be included.
 	*/
-	public static Pair<Game.Source, List<GameInfo>> parseDataset(String inputFile) throws IOException {
-		JSONObject jo = new JSONObject(Files.readString(Path.of(inputFile)));
-		Game.Source gameSource = parseGameSource(jo.getInt("playsrc"));
-		Collection<Team> teams = parseTeamArray(jo.optJSONArray("datasetteam"));
-		Collection<Pair<LocalDate, LocalDate>> dates = parseDateArray(jo.getJSONArray("dataset"));
-		List<GameInfo> answer = new LinkedList<GameInfo>();
-		for(Pair<LocalDate, LocalDate> p : dates){
-			answer.addAll(gameSource.getAllTeamGameInfosBetweenDates(p.first(), p.second(), teams.toArray(new Team[0])));
-		}
-		return new Pair<Game.Source, List<GameInfo>>(gameSource, answer);
+	public static Collection<Pair<LocalDate, LocalDate>> parseDataset(String inputFile) throws IOException {
+		return parseDataset(new JSONObject(Files.readString(Path.of(inputFile))).getJSONArray("dataset"));
 	}
-
-	//Returns a playbyplaysource according to the specification.
-	private static Game.Source parseGameSource(int playByPlaySource){
-		if(playByPlaySource == 0){
-			return Game.Source.NBA_ADVANCED_STATS;
-		} else {
-			throw new JSONException("Unrecognized play-by-play source: " + playByPlaySource);
-		}
-	}
-
-	//Parses a JSONArray of team strings into a collection of teams.
-	private static Collection<Team> parseTeamArray(JSONArray t){
-		if(t == null){
-			return new LinkedList<Team>();
-		}
-		Collection<Team> teams = new LinkedList<Team>();
-		for(Object o : t){
-			if(!(o instanceof String)){
-				throw new JSONException("Non-string in Team array: " + o.toString());
-			}
-			teams.add(parseTeam((String)o));
-		}
-		return teams;
+	
+	/**Returns a collection of pairs of dates given a JSON array according to the above specification.
+	 * @throws JSONException if the JSON array does not meet the standards described above.
+	 * @param jo The JSON array.
+	 * @return collection of pairs of dates given a JSON array according to the above specification.
+	 */
+	public static Collection<Pair<LocalDate, LocalDate>> parseDataset(JSONArray jo) {
+		return parseDateArray(jo);
 	}
 
 	//Parses an array of dates into a collection of beginning and end dates.
@@ -273,9 +271,14 @@ public class InputParsing {
 			return List.of(new Pair<LocalDate, LocalDate>(d, d));
 		} else if(Pattern.matches(dateIntervalPattern, input)){
 			String[] split = input.split(separator);
-			return List.of(new Pair<LocalDate, LocalDate>(parseDate(split[0]), parseDate(split[1])));
+			LocalDate d1 = parseDate(split[0]);
+			LocalDate d2 = parseDate(split[1]);
+			if(d2.isBefore(d1)) {
+				throw new JSONException("Second date cannot be before first date: " + input);
+			}
+			return List.of(new Pair<LocalDate, LocalDate>(d1, d2));
 		} else if(Pattern.matches(seasonPattern, input)){
-			String[] split = input.split(separator);
+			String[] split = input.replaceAll(seasonFormatPattern, "").split(separator);
 			Year beginning = Year.parse(split[0]);
 			Year end = Year.parse(split[1]);
 			if(beginning.isAfter(end)){
@@ -311,10 +314,11 @@ public class InputParsing {
 		Collection<Pair<LocalDate, LocalDate>> dates = new LinkedList<Pair<LocalDate, LocalDate>>();
 		boolean detected = false;
 		int index = year.getValue() - baseYear.getValue();
+		info = info.toLowerCase();
 		if(info.contains("r")){
 			detected = true;
 			dates.add(new Pair<LocalDate, LocalDate>(regularSeasonDates.get(index).first(), allStarWeekendDates.get(index).first()));
-			dates.add(new Pair<LocalDate, LocalDate>(regularSeasonDates.get(index).second(), allStarWeekendDates.get(index).second()));
+			dates.add(new Pair<LocalDate, LocalDate>(allStarWeekendDates.get(index).second(), regularSeasonDates.get(index).second()));
 		}
 		if(info.contains("p")){
 			detected = true;
@@ -337,6 +341,36 @@ public class InputParsing {
 		}
 		return dates;
 	}
+	
+	/**Parses the given file and returns a collection of team according to the above specification.
+	 * @param inputFile The input JSON file.
+	 * @throws IOException if an IO error occurs.
+	 * @throws JSONException if the given file is not a JSON file or is not fomatted as specified above.
+	 * @return a collection of team according to the above specification.
+	 */
+	public static Collection<Team> parseTeams(String inputFile) throws IOException {
+		return parseTeams(new JSONObject(Files.readString(Path.of(inputFile))).getJSONArray("datasetteam"));
+	}
+	
+	/**Returns a collection of team given a JSONArray according to the above specification.
+	 * @param t The JSON array.
+	 * @throws NullPointerException if t is null.
+	 * @throws JSONException if the JSON array does not meet the specification.
+	 * @return a collection of team given a JSONArray according to the above specification.
+	 */
+	public static Collection<Team> parseTeams(JSONArray t){
+		if(t == null){
+			return new LinkedList<Team>();
+		}
+		Collection<Team> teams = new LinkedList<Team>();
+		for(Object o : t){
+			if(!(o instanceof String)){
+				throw new JSONException("Non-string in Team array: " + o.toString());
+			}
+			teams.add(parseTeam((String)o));
+		}
+		return teams;
+	}
 
 	/**Parses the given file according to the specification above, and returns a list of the described constraints.
 	@param inputFile Path to the input file.
@@ -349,8 +383,13 @@ public class InputParsing {
 		return parseConstraints(new JSONObject(Files.readString(Path.of(inputFile))).getJSONArray("constraints"));
 	}
 
-	//Returns all constraints contained within this JSONArray.
-	private static Collection<Constraint> parseConstraints(JSONArray source){
+	/**Parses the given JSON array and returns constraints according to the above specification.
+	 * @param source The JSON array
+	 * @throws NullPointerException if source is null.
+	 * @throws JSONException if the JSON array does not meet the given specification.
+	 * @return
+	 */
+	public static Collection<Constraint> parseConstraints(JSONArray source){
 		Collection<Constraint> answer = new LinkedList<Constraint>();
 		for(Object o : source){
 			answer.add(parseConstraint(o));
@@ -377,9 +416,9 @@ public class InputParsing {
 		String s = jo.keys().next();
 		String constraintType = s.trim().toLowerCase();
 		if(constraintType.equals("or")){
-			return new DisjunctiveConstraint(parseConstraints(jo.getJSONArray(s)).toArray(new Constraint[0]));
+			return new OrConstraint(parseConstraints(jo.getJSONArray(s)).toArray(new Constraint[0]));
 		} else if(constraintType.equals("and")){
-			return new ConjunctiveConstraint(parseConstraints(jo.getJSONArray(s)).toArray(new Constraint[0]));
+			return new AndConstraint(parseConstraints(jo.getJSONArray(s)).toArray(new Constraint[0]));
 		} else if(constraintType.equals("not")){
 			return new NotConstraint(parseConstraint(jo.get(s)));
 		} else {
@@ -441,7 +480,7 @@ public class InputParsing {
 	private static TimeInterval parseTimeInterval(String constraint){
 		if(constraint.equals("ot")){
 			//An assumption is made that there will be no overtime past the 11th overtime.
-			return new TimeInterval(new Timestamp(5, 300), new Timestamp(15, 300));
+			return new TimeInterval(new Timestamp(5, 300), new Timestamp(15, 0));
 		} else if(Pattern.matches(timeIntervalPattern, constraint)){
 			String[] patternSplit = constraint.split(separator);
 			String firstTimestamp = patternSplit[0];
@@ -471,7 +510,7 @@ public class InputParsing {
 		int seconds = Integer.parseInt(secondsString);
 		int quarter = parseQuarter(quarterString);
 		try{
-			return new Timestamp((minutes * 60) + seconds, quarter);
+			return new Timestamp(quarter, (minutes * 60) + seconds);
 		} catch(IllegalArgumentException e){
 			throw new JSONException("Timestamp had an illegal amount of time.", e);
 		}

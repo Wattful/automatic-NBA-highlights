@@ -3,7 +3,7 @@ package thybulle.highlights;
 import java.util.*;
 import thybulle.misc.*;
 
-//TODO: Implement parsing.
+//TODO:
 
 /**Immutable class representing an interval of time in a game, implemented as a beginning Timestamp and an end Timestamp.
 @author Owen Kulik

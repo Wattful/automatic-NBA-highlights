@@ -20,7 +20,10 @@ public class Highlights {
 	//RI: plays is not null.
 	//AF: Represents a Highlights video. plays is all the plays in this video, in order.
 
-	//Constructs a Highlights object with the specified plays.
+	/**Constructs a Highlights object from the given plays.
+	 * @param p The plays to include.
+	 * @throws NullPointerException if p is null.
+	 */
 	Highlights(List<? extends Play> p){
 		plays = new LinkedList<Play>(p);
 		checkRep();
@@ -44,7 +47,7 @@ public class Highlights {
 	@throws NullPointerException if any parameters are null.
 	@return a video for this Highlights object.
 	*/
-	public Video saveVideo(String path, String garbageLocation) throws IOException {
+	public Video saveVideo(File path, File garbageLocation) throws IOException {
 		if(video != null){
 			return video;
 		}
@@ -56,7 +59,7 @@ public class Highlights {
 			v.add(p.getVideo());
 		}
 		//@SuppressWarnings("unchecked")
-		video = Video.combineVideos(path, garbageLocation, (Video[])v.toArray());
+		video = Video.combineVideos(path, garbageLocation, v.toArray(new Video[0]));
 		return video;
 	}
 
@@ -65,6 +68,13 @@ public class Highlights {
 	*/
 	public static HighlightsCompiler compiler(){
 		return new HighlightsCompiler();
+	}
+	
+	/**Returns the number of plays in this highlights object.
+	 * @return the number of plays in this highlights object.
+	 */
+	public int size() {
+		return plays.size();
 	}
 
 	/**Returns a hash code for this Highlights object.

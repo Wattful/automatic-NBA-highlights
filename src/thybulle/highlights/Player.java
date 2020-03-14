@@ -22,7 +22,7 @@ public class Player implements Constraint, Comparable<Player> {
 	//RI: lastName is not null.
 	//AF: Represents an immutable player with first name firstName and last name lastName. If a player has one name (ex Nene), firstName is null. 
 
-	/**Constructs a player with first name first and last name last. If a player only has one name (ex Nene), first should be null.
+	/*Constructs a player with first name first and last name last. If a player only has one name (ex Nene), first should be null.
 	*/
 	private Player(String first, String last){
 		if(last == null){
@@ -116,7 +116,7 @@ public class Player implements Constraint, Comparable<Player> {
 	}
 
 	@Override
-	/**Compares this Player to the specified player, using the players' names.
+	/**Compares this Player to the specified player, using the players' full names.
 	@param other The team to compare this to.
 	@throws NullPointerException if other is null.
 	@return a negative number if this is "less than" other, 0 if this is equal to other, and a positive number if this is "greater than" other.

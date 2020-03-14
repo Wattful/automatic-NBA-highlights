@@ -18,7 +18,7 @@ In order to construct a game, one must use the Game.Source enum.<br>
 @author Owen Kulik
 */
 
-public class Game implements Comparable<Game> {
+public class Game {
 	private static final boolean CHECK_REP = true;
 
 	private final LocalDate date;
@@ -26,12 +26,7 @@ public class Game implements Comparable<Game> {
 	private final Team awayTeam;
 	private final Team homeTeam;
 
-	private final NavigableSet<Play> data = new TreeSet<Play>(orderByTimestamp);
-
-	//A comparator which orders plays by timestamp.
-	private static final Comparator<Play> orderByTimestamp = (p1, p2) -> {
-		return p1.getTimestamp().compareTo(p2.getTimestamp());
-	};
+	private final List<Play> data = new LinkedList<Play>();
 
 	private static final Map<GameInfo, Game> interning = new HashMap<GameInfo, Game>();
 
@@ -86,7 +81,7 @@ public class Game implements Comparable<Game> {
 	@return a list of all plays which meet the given constraints.
 	*/
 	public List<Play> getAllPlaysThatSatisfy(Constraint... constraints){
-		return List.copyOf(this.constrain(new ConjunctiveConstraint(constraints)));
+		return List.copyOf(this.constrain(new AndConstraint(constraints)));
 	}
 
 	//Returns a list of all plays in this game that meet the constraint.
@@ -124,27 +119,8 @@ public class Game implements Comparable<Game> {
 	/**Returns the date this game was played.
 	@return the date this game was played.
 	*/
-	public LocalDate getStartingTime(){
+	public LocalDate getDate(){
 		return date;
-	}
-
-	@Override
-	/**Compares this Game to the specified Game.<br>
-	The games are compared first by the date they occurred, then by the away team name, then by the home team name.
-	@param other The Game to compare this to.
-	@throws NullPointerException if other is null.
-	@return a negative number if this Game is "less than" the other game, 0 if they are equal
-	*/
-	public int compareTo(Game other){
-		int dateCompare = this.date.compareTo(other.date);
-		if(dateCompare != 0){
-			return dateCompare;
-		}
-		int awayCompare = this.awayTeam.compareTo(other.awayTeam);
-		if(awayCompare != 0){
-			return awayCompare;
-		}
-		return this.homeTeam.compareTo(other.homeTeam);
 	}
 
 	@Override
@@ -184,16 +160,14 @@ public class Game implements Comparable<Game> {
 		@return a Game with play-by-play data from a game which occurred at 
 		the specified date and time between the specified teams, or null if no such Game exists.
 		*/
-		public Game getGame(LocalDate time, Team away, Team home) throws IOException {
-			return getGame(new GameInfo(time, away, home));
-		}
-
-		//Returns the game corresponding to this GameInfo, or null if no such game exists.
-		private Game getGame(GameInfo gi) throws IOException {
+		public Game getGame(GameInfo gi) throws IOException {
 			if(interning.containsKey(gi)){
 				return interning.get(gi);
 			}
 			Collection<? extends Play> plays = this.downloadGame(gi);
+			if(plays == null) {
+				return null;
+			}
 			Game g = new Game(gi, plays);
 			interning.put(gi, g);
 			return g;
@@ -217,60 +191,47 @@ public class Game implements Comparable<Game> {
 			return answer;
 		}
 
-		/**Returns a list of all NBA GameInfos played on the given day.
+		/**Returns information for all NBA games played on the given day.
 		@param date The day to get NBA games from.
 		@throws NullPointerException if any paramter is null.
-		@return a list of all NBA GameInfos played on the given day.
+		@return information for all NBA games played on the given day.
 		*/
-		public List<GameInfo> getAllGameInfosOnDay(LocalDate ld) throws IOException {
-			return source.getAllGameInfosOnDay(ld);
+		public List<GameInfo> getGameInfomationOnDay(LocalDate ld) throws IOException {
+			return source.getGameInformationOnDay(ld);
 		}
 
-		/**Returns a list of all NBA Games played on the given day.
-		@param date The day to get NBA games from.
-		@throws NullPointerException if any paramter is null.
-		@return a list of all NBA Games played on the given day.
-		*/
-		public List<Game> getAllGamesOnDay(LocalDate date) throws IOException {
-			List<Game> answer = new LinkedList<Game>();
-			for(GameInfo g : source.getAllGameInfosOnDay(date)){
-				Game game = getGame(g);
-				answer.add(game);
-			}
-			return answer;
-		}
-
-		/**Returns a list of all NBA GameInfos played between the given dates, inclusive.
+		/**Returns information for all NBA games played between the given dates, inclusive.
 		@param beginning The beginning date.
 		@param end The end date.
 		@throws NullPointerException if any paramter is null.
 		@throws IllegalArgumentException if end is before beginning.
-		@return a list of all NBA GameInfos played between the given dates, inclusive.
+		@return information for all NBA games played between the given dates, inclusive.
 		*/
-		public List<GameInfo> getAllGameInfosBetweenDates(LocalDate beginning, LocalDate end) throws IOException {
+		public List<GameInfo> getGameInformationBetweenDates(LocalDate beginning, LocalDate end) throws IOException {
 			if(beginning.isAfter(end)){
 				throw new IllegalArgumentException("Beginning date was after end date.");
 			}
 			List<GameInfo> answer = new LinkedList<GameInfo>();
 			for(int i = 0; i < beginning.until(end, ChronoUnit.DAYS); i++){
 				LocalDate d = beginning.plusDays(i);
-				answer.addAll(getAllGameInfosOnDay(d));
+				answer.addAll(getGameInfomationOnDay(d));
 			}
 			return answer;
 		}
 
-		/**Returns the GameInfos played by the given teams on date. If no teams are specified, returns all games on the date.
+		/**Returns information for games played by the given teams on date.<br>
+		 * If no teams are specified, returns information for all games on the date.
 		@param date The date to look for a game.
 		@param team The team to get the game of.
 		@throws NullPointerException if any paramter is null.
-		@return the GameInfo played by team on date, or null if no such game exists.
+		@return information for games played by the given teams on date
 		*/
-		public List<GameInfo> getTeamGameInfosOnDay(LocalDate date, Team... teams) throws IOException {
+		public List<GameInfo> getTeamGameInfomationOnDay(LocalDate date, Team... teams) throws IOException {
 			if(teams.length == 0){
-				return getAllGameInfosOnDay(date);
+				return getGameInfomationOnDay(date);
 			}
 			List<GameInfo> answer = new LinkedList<GameInfo>();
-			for(GameInfo g : source.getAllGameInfosOnDay(date)){
+			for(GameInfo g : source.getGameInformationOnDay(date)){
 				for(Team team : teams){
 					if(g.hasTeam(team)){
 						answer.add(g);
@@ -280,7 +241,8 @@ public class Game implements Comparable<Game> {
 			return answer;
 		}
 
-		/**Returns a list of all GameInfos played by the given teams between the given dates, inclusive. If no teams are specified, returns all games between the dates.
+		/**Returns information for all games played by the given teams between the given dates, inclusive.<br>
+		 * If no teams are specified, returns information for all games between the dates.
 		@param beginning The beginning date.
 		@param end The end date.
 		@param teams The teams to get games of.
@@ -288,9 +250,9 @@ public class Game implements Comparable<Game> {
 		@throws IllegalArgumentException if end is before beginning.
 		@return a list of all GameInfos played by the given team between the given dates, inclusive.	
 		*/
-		public List<GameInfo> getAllTeamGameInfosBetweenDates(LocalDate beginning, LocalDate end, Team... teams) throws IOException {
+		public List<GameInfo> getTeamGameInformationBetweenDates(LocalDate beginning, LocalDate end, Team... teams) throws IOException {
 			if(teams.length == 0){
-				return getAllGameInfosBetweenDates(beginning, end);
+				return getGameInformationBetweenDates(beginning, end);
 			}
 			if(beginning.isAfter(end)){
 				throw new IllegalArgumentException("Beginning date was after end date.");
@@ -298,10 +260,17 @@ public class Game implements Comparable<Game> {
 			List<GameInfo> answer = new LinkedList<GameInfo>();
 			for(int i = 0; i < beginning.until(end, ChronoUnit.DAYS); i++){
 				LocalDate d = beginning.plusDays(i);
-				List<GameInfo> g = getTeamGameInfosOnDay(d, teams);
+				List<GameInfo> g = getTeamGameInfomationOnDay(d, teams);
 				answer.addAll(g);
 			}
 			return answer;
+		}
+		
+		/**Closes all resources associated with this source.<br>
+		 * Once this method is called, other methods associated with this Game Source can no longer be called.
+		 */
+		public void exit() {
+			source.exit();
 		}
 	}
 }

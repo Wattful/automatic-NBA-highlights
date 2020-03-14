@@ -1,17 +1,28 @@
 package thybulle.highlights;
 
+import java.io.PrintStream;
 import java.util.logging.*;
 import thybulle.misc.Logging;
 
+/**Class to be used for logging in the Highlights package.
+ * Outside classes can designate where they want logging output to be printed using the setOutput method.
+ * @author kuliko
+ *
+ */
+
 public class HighlightsLogger {
-	static final Logging logging = new Logging("thybulle.highlights");
+	static Logging logging = new Logging();
 
 	private HighlightsLogger(){}
 
-	/**Adds the given handler to this logger.
-	@param h The handler to add.
+	/**Outputs information from Highlights to the given PrintStream.
+	 * @param ps the PrintStream to use. If ps is null, will not output anything.
 	*/
-	public static void addHandler(Handler h){
-		logging.addHandler(h);
+	public static void setOutput(PrintStream ps){
+		if(ps == null) {
+			logging = new Logging();
+		} else {
+			logging = new Logging(ps);
+		}
 	}
 }

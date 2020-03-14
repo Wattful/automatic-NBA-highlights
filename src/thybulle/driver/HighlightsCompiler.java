@@ -19,7 +19,8 @@ public class HighlightsCompiler {
 	private final List<Game> sourceGames;
 	private final Collection<Constraint> constraintSet;
 
-	//Constructs a HighlightsCompiler without any constraints.
+	/**Constructs a HighlightsCompiler without any constraints or source games.
+	 */
 	HighlightsCompiler(){
 		sourceGames = new LinkedList<Game>();
 		constraintSet = new HashSet<Constraint>();
@@ -56,7 +57,7 @@ public class HighlightsCompiler {
 		}
 		List<Play> plays = new LinkedList<Play>();
 		for(Game g : sourceGames){
-			plays.addAll(g.getAllPlaysThatSatisfy((Constraint[])constraintSet.toArray()));
+			plays.addAll(g.getAllPlaysThatSatisfy(constraintSet.toArray(new Constraint[0])));
 		}
 		return new Highlights(plays);
 	}

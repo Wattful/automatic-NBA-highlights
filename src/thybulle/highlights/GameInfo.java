@@ -17,13 +17,19 @@ public class GameInfo implements Comparable<GameInfo> {
 	//RI: No fields are null, !away.equals(home).
 	//AF: Represents a game data "skeleton" - all data necessary to identify a game. date is the game's date and time, away is the away team, home is the home team.
 
-	//Constructs a GameInfo with the given data.
-	GameInfo(LocalDate time, Team awayTeam, Team homeTeam){
+	/**Constructs a GameInfo with the given infomration.
+	 * @param time The date the games was played on.
+	 * @param awayTeam The game's away team.
+	 * @param homeTeam The game's home team.
+	 * @throws NullPointerException if any parameter is null.
+	 * @throws IllegalArgumentException if awayTeam is the same as homeTeam.
+	 */
+	public GameInfo(LocalDate time, Team awayTeam, Team homeTeam){
 		if(time == null || awayTeam == null || homeTeam == null){
 			throw new NullPointerException();
 		}
 		if(awayTeam.equals(homeTeam)){
-			throw new IllegalArgumentException("A team cannot play itself.");
+			throw new IllegalArgumentException("A team cannot play itself:" + awayTeam.toString() + " " + homeTeam.toString());
 		}
 		date = time;
 		away = awayTeam;

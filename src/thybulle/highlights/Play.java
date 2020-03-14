@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 import thybulle.misc.*;
 
-//TODO: implement getVideo
+//TODO:
 
 /**Immutable class representing a play, with the ability to get a video of the play.
 @author Owen Kulik
@@ -14,7 +14,7 @@ public abstract class Play {
 	private static final boolean CHECK_REP = true;
 
 	private final PlayType pt;
-	private final Player[] p;
+	private final List<Player> p;
 	private final Timestamp t;
 	private final Team te;
 
@@ -25,7 +25,7 @@ public abstract class Play {
 	/**Constructs a Play with the specified fields.
 	@throws NullPointerException if any arguments are null.
 	*/
-	public Play(PlayType playType, Timestamp timestamp, Team team, Player... player){
+	protected Play(PlayType playType, Timestamp timestamp, Team team, Player... player){
 		if(playType == null || player == null || timestamp == null || team == null){
 			throw new NullPointerException("A field was null.");
 		}
@@ -33,7 +33,7 @@ public abstract class Play {
 			throw new IllegalArgumentException("Number of players did not match the number required for the play type.");
 		}
 		pt = playType;
-		p = player;
+		p = List.of(player);
 		t = timestamp;
 		te = team;
 		checkRep();
@@ -44,7 +44,7 @@ public abstract class Play {
 		if(!CHECK_REP){
 			return;
 		}
-		if(p.length != pt.getNumberOfPlayers()){
+		if(p.size() != pt.getNumberOfPlayers()){
 			throw new IllegalStateException();
 		}
 		if(pt == null || p == null || t == null || te == null){
@@ -68,7 +68,7 @@ public abstract class Play {
 	@return the players that are associated with this play.
 	*/
 	public List<Player> getPlayers(){
-		return Collections.unmodifiableList(Arrays.asList(p));
+		return p;
 	}
 
 	/**Returns the time that this play occured at.
@@ -119,6 +119,6 @@ public abstract class Play {
 	@return a String representation of this Play.
 	*/
 	public String toString(){
-		return pt.toString() + " by " + p.toString() + " of " + te.toString() + " at " + t.toString();
+		return pt.toString() + " by " + (p.size() > 0 ? (p.toString() + " of ") : "") + te.toString() + " at " + t.toString();
 	}
 }

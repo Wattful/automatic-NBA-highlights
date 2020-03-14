@@ -13,17 +13,36 @@ import java.net.*;
 
 public class Video {
 	private static final boolean CHECK_REP = true;
+	
+	private final URL internetLocation;
+	private final File machineLocation;
 
-	private final String videoLocation;
+	//RI: one field is null, the other is not.
+	//AF: Represents a video, either on the internet or on the local machine.
 
-	//RI: videoLocation != null.
-	//AF: Represents a video. videoLocation is a URI pointing to the video.
-
-	public Video(String uri){
-		if(uri == null){
-			throw new NullPointerException("URI was null.");
+	/**Constructs a video pointing to the given URL.
+	 * @param file The URL where the video is located.
+	 * @throws NullPointerException if file is null.
+	 */
+	public Video(URL file) {
+		if(file == null) {
+			throw new NullPointerException();
 		}
-		videoLocation = uri;
+		internetLocation = file;
+		machineLocation = null;
+		checkRep();
+	}
+	
+	/**Constructs a video pointing to the given file.
+	 * @param location The file where the video is located.
+	 * @throws NullPointerException if location is null.
+	 */
+	public Video(File location) {
+		if(location == null) {
+			throw new NullPointerException();
+		}
+		internetLocation = null;
+		machineLocation = location;
 		checkRep();
 	}
 
@@ -32,39 +51,49 @@ public class Video {
 		if(!CHECK_REP){
 			return;
 		}
-		if(videoLocation == null){
+		if(internetLocation == null && machineLocation == null){
+			throw new IllegalStateException();
+		}
+		if(internetLocation != null && machineLocation != null){
 			throw new IllegalStateException();
 		}
 	}
 
 	/**Combines the given videos and saves them to location.
 	@param location The location to save the video.
+	@param garbageFolder a folder to use to save temporary files.
 	@param videos The videos to combine.
 	@throws NullPointerException if either argument is null.
 	@throws IllegalArgumentException if videos.length == 0.
 	@return a reference to the resulting video.
 	*/
-	public static Video combineVideos(String location, String garbageFolder, Video... videos) throws IOException {
-		if(videos == null || location == null){
+	public static Video combineVideos(File location, File garbageFolder, Video... videos) throws IOException {
+		if(location == null || garbageFolder == null || videos == null){
 			throw new NullPointerException();
 		}
 		if(videos.length == 0){
 			throw new IllegalArgumentException("videos.length was 0.");
 		}
-		List<Video> videoLocations = new LinkedList<Video>();
-		for(int i = 0; i < videos.length; i++){
-			videoLocations.add(videos[i].save(garbageFolder + File.separator + i + ".mp4"));
-		}
+		//StringBuilder sb = new StringBuilder("ffmpeg -y -i \"concat:");
 		StringBuilder s = new StringBuilder("");
 		for(int i = 0; i < videos.length; i++){
-			s.append("file '" + videoLocations.get(i) + "'\n");
+			if(videos[i] == null) {
+				continue;
+			}
+			Video v = videos[i].save(new File(garbageFolder, i + ".mp4"));
+			//sb.append(v.getLocation() + "|");
+			s.append("file '" + v.getLocation() + "'\n");
 		}
+		/*sb.deleteCharAt(sb.length() - 1);
+		sb.append("\"");
+		sb.append(" -c copy " + location.toString() + "");*/
 
-		BufferedWriter writer = new BufferedWriter(new FileWriter(garbageFolder + File.separator + "list.txt"));
+		File list = new File(garbageFolder, File.separator + "list.txt");
+		BufferedWriter writer = new BufferedWriter(new FileWriter(list));
     	writer.write(s.toString());
     	writer.close();
 
-    	Process concat = Runtime.getRuntime().exec("ffmpeg -y -f concat -safe 0 -i list.txt -c copy " + location);
+    	Process concat = Runtime.getRuntime().exec("ffmpeg -y -f concat -safe 0 -i " + list.getAbsolutePath() + " -c copy " + location.getAbsolutePath());
     	BufferedReader stdInput = new BufferedReader(new InputStreamReader(concat.getErrorStream()));
 		String t;
 		while ((t = stdInput.readLine()) != null) {
@@ -78,28 +107,17 @@ public class Video {
 	@throws NullPointerException if location is null.
 	@return a reference to a Video object pointing to the given location.
 	*/
-	public Video save(String location) throws IOException {
+	public Video save(File location) throws IOException {
 		if(location == null){
 			throw new NullPointerException();
 		}
-		
 		InputStream stream;
-		String scheme;
-		try{
-			scheme = new URI(videoLocation).getScheme();
-		} catch(URISyntaxException e){
-			throw new IOException("Video location " + videoLocation + " was not a valid URI.", e);
-		}
-		if(scheme.equals("http") || scheme.equals("https")){
-			stream = new URL(videoLocation).openStream();
+		if(internetLocation != null){
+			stream = internetLocation.openStream();
 		} else {
-			stream = new FileInputStream(videoLocation);
+			stream = new FileInputStream(machineLocation);
 		}
-		try (InputStream in = stream) {
-		    Files.copy(in, Path.of(new URI(location)), StandardCopyOption.REPLACE_EXISTING);
-		} catch(URISyntaxException e){
-			throw new IOException(location + " was not a valid URI.", e);
-		}
+		Files.copy(stream, location.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		return new Video(location);
 	}
 
@@ -107,7 +125,7 @@ public class Video {
 	@return the location that this Video points to.
 	*/
 	public String getLocation(){
-		return videoLocation;
+		return (internetLocation != null ? internetLocation.toString() : machineLocation.toString());
 	}
 
 	@Override
@@ -115,7 +133,7 @@ public class Video {
 	@return a hash code for this Video.
 	*/
 	public int hashCode(){
-		return videoLocation.hashCode();
+		return (internetLocation != null ? internetLocation.hashCode() : machineLocation.hashCode());
 	}
 
 	@Override
@@ -136,7 +154,7 @@ public class Video {
 			return false;
 		}
 		Video v = (Video)o;
-		return this.videoLocation.equals(v.videoLocation);
+		return (internetLocation != null ? this.internetLocation.equals(v.internetLocation) : this.machineLocation.equals(v.machineLocation));
 	}
 
 	@Override
@@ -144,6 +162,6 @@ public class Video {
 	@return a String representation of this Video.
 	*/
 	public String toString(){
-		return "Video located at " + videoLocation;
+		return "Video located at " + this.getLocation();
 	}
 }

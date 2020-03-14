@@ -16,7 +16,7 @@ interface GameSource {
 	@throws NullPointerExcpetion if date is null
 	@return a list of GameInfos representing all NBA games played on the given date.
 	*/
-	List<GameInfo> getAllGameInfosOnDay(LocalDate date) throws IOException;
+	List<GameInfo> getGameInformationOnDay(LocalDate date) throws IOException;
 
 	/**Returns a collection of all plays occuring in the game represented by the given GameInfo, or an empty collection if no video info is available for the game.<br>
 	The iteration order of the returned collection will return the plays in the order of when they occurred in the game.
@@ -25,4 +25,9 @@ interface GameSource {
 	@return a collection of all plays occuring in the game represented by the given GameInfo.
 	*/
 	Collection<? extends Play> getPlayByPlay(GameInfo gi) throws IOException;
+	
+	/**Closes all resources associated with this GameSource.<br>
+	 * Once this method is called on an instance of GameSource, no other methods can be called on the same instance.
+	 */
+	void exit();
 }

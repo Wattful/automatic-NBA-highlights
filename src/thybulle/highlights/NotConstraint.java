@@ -87,7 +87,7 @@ public class NotConstraint implements Constraint {
 	@return a String representation of this NotConstraint.
 	*/
 	public String toString(){
-		return "( NOT " + constraint.toString() + " )";
+		return "(NOT " + constraint.toString() + ")";
 	}
 
 }
