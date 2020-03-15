@@ -512,7 +512,7 @@ public class InputParsing {
 		try{
 			return new Timestamp(quarter, (minutes * 60) + seconds);
 		} catch(IllegalArgumentException e){
-			throw new JSONException("Timestamp had an illegal amount of time.", e);
+			throw new JSONException("Timestamp had an illegal amount of time: " + constraint);
 		}
 	}
 
@@ -523,7 +523,7 @@ public class InputParsing {
 			try{
 				overtime = Integer.parseInt(constraint.substring(0, constraint.length() - 2));
 			} catch(NumberFormatException e){
-				throw new JSONException("Unknown overtime period: " + constraint, e);
+				throw new JSONException("Unknown overtime period: " + constraint);
 			}
 			if(overtime <= 0){
 				throw new JSONException("Overtime period was below 1.");

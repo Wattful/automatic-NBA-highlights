@@ -211,6 +211,9 @@ public class Game {
 			if(beginning.isAfter(end)){
 				throw new IllegalArgumentException("Beginning date was after end date.");
 			}
+			if(beginning.equals(end)){
+				return getGameInfomationOnDay(beginning);
+			}
 			List<GameInfo> answer = new LinkedList<GameInfo>();
 			for(int i = 0; i < beginning.until(end, ChronoUnit.DAYS); i++){
 				LocalDate d = beginning.plusDays(i);
@@ -256,6 +259,9 @@ public class Game {
 			}
 			if(beginning.isAfter(end)){
 				throw new IllegalArgumentException("Beginning date was after end date.");
+			}
+			if(beginning.equals(end)){
+				return getTeamGameInfomationOnDay(beginning, teams);
 			}
 			List<GameInfo> answer = new LinkedList<GameInfo>();
 			for(int i = 0; i < beginning.until(end, ChronoUnit.DAYS); i++){

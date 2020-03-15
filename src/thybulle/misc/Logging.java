@@ -27,7 +27,7 @@ public class Logging {
 	//Outputs the given message.
 	private void log(String message) {
 		if(logging != null) {
-			logging.print(message);
+			logging.println(message);
 		}
 	}
 	

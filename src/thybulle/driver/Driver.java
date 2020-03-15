@@ -29,11 +29,12 @@ public class Driver {
 		Collection<Pair<LocalDate, LocalDate>> dataset = InputParsing.parseDataset(inputFile);
 		Collection<Team> teams = InputParsing.parseTeams(inputFile);
 		
-		logging.info("Getting play-by-play data");
+		logging.info("Getting game information");
 		List<GameInfo> information = new LinkedList<GameInfo>();
 		for(Pair<LocalDate, LocalDate> p : dataset) {
 			information.addAll(source.getTeamGameInformationBetweenDates(p.first(), p.second(), teams.toArray(new Team[0])));
 		}
+		logging.info("Getting play-by-play data");
 		List<Game> games = source.getGames(information);
 		logging.info("Done getting play-by-play data. Found " + games.size() + " games.");
 		hc.addGames(games.toArray(new Game[0]));
@@ -46,10 +47,11 @@ public class Driver {
 		logging.info("Done!");
 		source.exit();
 		
-		/*List<Game> g = Game.Source.NBA_ADVANCED_STATS.getGames(Game.Source.NBA_ADVANCED_STATS.getAllGameInfosOnDay(LocalDate.of(2020, 3, 10)));
+		/*List<Game> g = Game.Source.NBA_ADVANCED_STATS.getGames(Game.Source.NBA_ADVANCED_STATS.getGameInfomationOnDay(LocalDate.of(2020, 3, 10)));
 		HighlightsCompiler hc = Highlights.compiler();
 		hc.addGames(g.toArray(new Game[0]));
 		hc.addConstraints(PlayType.AND_ONE_DUNK);
-		hc.compile().saveVideo(new File("C:\\Users\\kuliko\\Desktop\\javier\\Basketball\\complete\\mar11andonedunks.mp4"), new File("C:\\Users\\kuliko\\Desktop\\javier\\Basketball\\garbage"));*/
+		hc.compile().saveVideo(new File("C:\\Users\\kuliko\\Desktop\\javier\\Basketball\\complete\\mar11andonedunks.mp4"), new File("C:\\Users\\kuliko\\Desktop\\javier\\Basketball\\garbage"));
+		*/
 	}
 }
