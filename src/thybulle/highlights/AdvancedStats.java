@@ -32,9 +32,7 @@ import com.google.common.base.Predicate;
 class AdvancedStats implements GameSource {
 	private static final long DEFAULT_TIMEOUT = 4000;
 	private static final long VIDEO_TIMEOUT = 10000;
-	
-	private static final AdvancedStats singleton = new AdvancedStats();
-	
+		
 	private WebDriver driver;
 	
 	private static final Map<GameInfo, String> links = new HashMap<GameInfo, String>();
@@ -285,9 +283,9 @@ class AdvancedStats implements GameSource {
 			Collection<AdvancedStatsPlay> plsr = parsePlays(unparsedPlayGroup.reversePair(), homePlayers, awayPlayers, gi.homeTeam(), t);
 			if(pls.isEmpty() && plsr.isEmpty()) {
 				if(!unparsedPlayGroup.first().isEmpty()) {
-					System.err.println("No match found for " + unparsedPlayGroup.first().get(0).rawPlay);
+					logging.warning("No match found for " + unparsedPlayGroup.first().get(0).rawPlay);
 				} else if(!unparsedPlayGroup.second().isEmpty()){
-					System.err.println("No match found for " + unparsedPlayGroup.second().get(0).rawPlay);
+					logging.warning("No match found for " + unparsedPlayGroup.second().get(0).rawPlay);
 				}
 			}
 			
@@ -336,11 +334,11 @@ class AdvancedStats implements GameSource {
 		for(int i = 0; i < unparsedPlayGroup.first().size(); i++){
 			
 			Collection<AdvancedStatsPlay> newPlaysForThisUnparsedPlay = new LinkedList<AdvancedStatsPlay>();
-			for(Pair<String, String> parsingPair : playTypeParsing.keySet()){
+			eachPlayType: for(Pair<String, String> parsingPair : playTypeParsing.keySet()){
 				PlayType playType = playTypeParsing.get(parsingPair);
 				for(Play p : newPlaysForThisUnparsedPlay){
 					if(p.getType().hasSupertype(playType)){
-						continue;
+						continue eachPlayType;
 					}
 				}
 
@@ -361,14 +359,14 @@ class AdvancedStats implements GameSource {
 					playerLastNames.addAll(getAllGroups(matcher2));
 				}
 				Player[] players = new Player[playerLastNames.size()];
-				//System.out.println(unparsedPlayGroup.first().get(i).rawPlay);
-				//System.out.println(playType);
-				//System.out.println(playerLastNames);
+				//logging.info(unparsedPlayGroup.first().get(i).rawPlay);
+				//logging.info(playType.toString());
+				//logging.info(playerLastNames.toString());
 				for(int j = 0; j < playerLastNames.size(); j++){
 					players[j] = guessPlayer(playerLastNames.get(j), firstPlayers, secondPlayers);
 				}
 				
-				AdvancedStatsPlay asp = new AdvancedStatsPlay(unparsedPlayGroup.first().get(i).playLink, playType, timestamp, team, players);
+				AdvancedStatsPlay asp = new AdvancedStatsPlay(this, unparsedPlayGroup.first().get(i).playLink, playType, timestamp, team, players);
 				newPlays.add(asp);
 				newPlaysForThisUnparsedPlay.add(asp);
 			}
@@ -398,7 +396,7 @@ class AdvancedStats implements GameSource {
 				return p;
 			}
 		}
-		System.err.println("Player not found: " + lastName);
+		logging.warning("Player not found: " + lastName);
 		return Player.get("", "");
 		//throw new AssertionError();
 	}
@@ -503,10 +501,12 @@ class AdvancedStats implements GameSource {
 
 	private static class AdvancedStatsPlay extends Play {
 		private final String playLink;
+		private final AdvancedStats source;
 		private Video v;
 
-		private AdvancedStatsPlay(String link, PlayType playType, Timestamp timestamp, Team team, Player... player){
+		private AdvancedStatsPlay(AdvancedStats stats, String link, PlayType playType, Timestamp timestamp, Team team, Player... player){
 			super(playType, timestamp, team, player);
+			source = stats;
 			playLink = link;
 		}
 
@@ -520,8 +520,8 @@ class AdvancedStats implements GameSource {
 			if(v != null){
 				return v;
 			}
-			singleton.setup();
-			Element playBody = singleton.renderPage(this.playLink, VIDEO_TIMEOUT).body();
+			source.setup();
+			Element playBody = source.renderPage(this.playLink, VIDEO_TIMEOUT).body();
 			try {
 				v = new Video(new URL(playBody.getElementById("stats-videojs-player_html5_api").attr("src")));
 				return v;
