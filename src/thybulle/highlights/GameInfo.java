@@ -2,8 +2,10 @@ package thybulle.highlights;
 
 import java.time.*;
 
+import org.json.*;
+
 /**Class representing all of the necessary information to identify an NBA game. <br>
-Stores the date that a game occurred on, as well as the game's home and away team. <br>
+Stores the date that a game occurred on, as well as the game's home and away teams. <br>
 @author Owen Kulik
 */
 
@@ -76,6 +78,48 @@ public class GameInfo implements Comparable<GameInfo> {
 	*/
 	public boolean hasTeam(Team t){
 		return home.equals(t) || away.equals(t);
+	}
+
+	/**Returns a JSONObject representation of this GameInfo.<br>
+	The JSONObject will have three keys: "date", "away", and "home", 
+	which point to string representations of the date, away team, and home team, respectively.
+	@return a JSONObject representation of this GameInfo.
+	*/
+	public JSONObject toJSON(){
+		JSONObject answer = new JSONObject();
+		answer.put("date", this.date.toString());
+		answer.put("away", this.away.toString());
+		answer.put("home", this.home.toString());
+		return answer;
+	}
+
+	/**Parses and returns a GameInfo from the given JSONObject according to the specification in the toJSON() method.
+	@param input The JSONObject to parse.
+	@throws NullPointerException if input is null.
+	@throws JSONException if the JSONObject does not meet the specification.
+	@return a GameInfo with the information in the given JSONObject.
+	*/
+	public static GameInfo fromJSON(JSONObject input){
+		return new GameInfo(LocalDate.parse(input.getString("date")), Team.get(input.getString("away")), Team.get(input.getString("home")));
+	}
+
+	/**Parses and returns a GameInfo from a String.<br>
+	The string must be in EXACTLY the following format: DATE - AWAY_TEAM at HOME_TEAM.<br>
+	The date can be in any format which can be parsed by the LocalDate.parse() method.<br>
+	Note that this format is the same as the one return by GameInfo.toString().
+	@param input The String to parse.
+	@throws NullPointerException if input is null.
+	@throws IllegalArgumentException if input does not match the specified format.
+	@return a GameInfo object parsed from the given string.
+	*/
+	public static GameInfo parse(String input){
+		if(input.indexOf(" - ") == -1 || input.indexOf(" at ") == -1 || input.indexOf(" - ") > input.indexOf(" at ")){
+			throw new IllegalArgumentException("Malformed GameInfo String: " + input);
+		}
+		String date = input.substring(0, input.indexOf(" - "));
+		String away = input.substring(input.indexOf(" - ") + 3, input.indexOf(" at "));
+		String home = input.substring(input.indexOf(" at ") + 4);
+		return new GameInfo(LocalDate.parse(date), Team.get(away), Team.get(home));
 	}
 
 	@Override

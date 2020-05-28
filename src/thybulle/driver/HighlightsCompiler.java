@@ -26,21 +26,25 @@ public class HighlightsCompiler {
 		constraintSet = new HashSet<Constraint>();
 	}
 
-	/**Adds the specified games to the compiler.
+	/**Adds the specified games to the compiler. Nulls are ignored.
 	@param g The games to get highlights from.
 	@return this, for method call chaining.
 	*/
 	public HighlightsCompiler addGames(Game... g){
-		sourceGames.addAll(List.of(g));
+		List<Game> games = new LinkedList<Game>(Arrays.asList(g));
+		games.removeAll(Collections.singleton(null));
+		sourceGames.addAll(games);
 		return this;
 	}
 
-	/**Adds the specified constraints to this HighlightsCompiler.
+	/**Adds the specified constraints to this HighlightsCompiler. Nulls are ignored.
 	@param c The constraints to add.
 	@return this, for method call chaining.
 	*/
 	public HighlightsCompiler addConstraints(Constraint... c){
-		constraintSet.addAll(List.of(c));
+		List<Constraint> constraints = new LinkedList<Constraint>(Arrays.asList(c));
+		constraints.removeAll(Collections.singleton(null));
+		constraintSet.addAll(constraints);
 		return this;
 	}
 

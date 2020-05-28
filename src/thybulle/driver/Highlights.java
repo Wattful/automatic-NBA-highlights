@@ -39,27 +39,36 @@ public class Highlights {
 		}
 	}
 
-	/**Saves this highlights video to the specified path.<br>
-	Since this method downloads videos from the internet before combining them, it must save the videos intermediately.<br>
-	Therefore, you must provide a location to temporarily store these videos.<br>
+	/**Saves this highlights video to the specified path.
 	@param path The location to save the video.
-	@param garbageLocation The location to save temporary videos.
 	@throws NullPointerException if any parameters are null.
 	@return a video for this Highlights object.
 	*/
-	public Video saveVideo(File path, File garbageLocation) throws IOException {
+	public Video saveVideo(File path) throws IOException {
+		return saveVideo(path, new Logging());
+	}
+
+	/**This method is exactly equivalent to {@link #saveVideo(File) saveVideo} except relevant information is logged through output.
+	@param path The location to save the video.
+	@param output Logging object to output relevant information.
+	@throws NullPointerException if any parameters are null.
+	@return a video for this Highlights object.
+	*/
+	public Video saveVideo(File path, Logging output) throws IOException {
 		if(video != null){
 			return video;
 		}
-		if(path == null || garbageLocation == null){
+		if(path == null){
 			throw new NullPointerException();
 		}
 		List<Video> v = new LinkedList<Video>();
+		output.info("Resolving " + plays.size() + (plays.size() == 1 ? " play video." : " play videos."));
 		for(Play p : plays){
 			v.add(p.getVideo());
 		}
+		output.info("Finished resolving play videos.");
 		//@SuppressWarnings("unchecked")
-		video = Video.combineVideos(path, garbageLocation, v.toArray(new Video[0]));
+		video = Video.combineVideos(path, output, v.toArray(new Video[0]));
 		return video;
 	}
 

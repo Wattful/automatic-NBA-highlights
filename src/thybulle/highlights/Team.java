@@ -9,7 +9,7 @@ import thybulle.misc.*;
 This class uses interning, and as such no constructors are public. <br>
 If one wishes to "construct" a team, they should use the {@code getNBATeam(String)} method.<br>
 This class has a hard-coded list of the names of all NBA teams, as well as all team names from the All-Star game and the Rising Stars challenge since 2012.<br>
-Here is a list of all NBA team names:
+Here is a list of all such team names:
 <ul>
 	<li>Current NBA Teams
 		<ul>
@@ -109,7 +109,7 @@ public class Team implements Constraint, Comparable<Team> {
 
 	/**Returns the NBA team with the given name, or null if no such team exists.<br>
 	A full list of NBA teams and their official names can be found in the description of this class.
-	@param name The team name
+	@param name The team name.
 	@throws NullPointerException if name is null.
 	@return the NBA team with the given name, or null if no such team exists.
 	*/
@@ -152,7 +152,7 @@ public class Team implements Constraint, Comparable<Team> {
 	@return this Team's name.
 	*/
 	public String name(){
-		return teamName;
+		return this.teamName;
 	}
 
 	@Override

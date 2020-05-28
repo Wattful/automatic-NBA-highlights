@@ -3,7 +3,7 @@ package thybulle.highlights;
 import java.util.*;
 import thybulle.misc.*;
 
-/**Enum representing possible play types.
+/**Enum representing possible play types.<br>
 Has the capability of marking PlayTypes as "supertypes" of other play types. For example, dunk is a supertype of and one dunk.
 @author Owen Kulik
 */
@@ -113,9 +113,6 @@ public enum PlayType implements Constraint {
 	@return a boolean representing whether p is of this PlayType, or of a supertype of this PlayType.
 	*/
 	public boolean satisfiedBy(Play p){
-		if(p == null){
-			throw new NullPointerException();
-		}
 		return p.getType().hasSupertype(this);
 	}
 

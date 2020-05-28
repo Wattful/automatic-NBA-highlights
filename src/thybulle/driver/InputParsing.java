@@ -139,7 +139,6 @@ The JSON object should have four keys, each of which are mandatory:
 public class InputParsing {
 	private static final String separator = "\\s*\\-\\s*";
 
-	private static final List<String> quarterNames = List.of("1st", "2nd", "3rd", "4th");
 	private static final String timestampPattern = "\\d{1,2}:\\d\\d\\s+\\d\\w\\w";
 	private static final String timeIntervalPattern = timestampPattern + separator + timestampPattern;
 
@@ -214,7 +213,7 @@ public class InputParsing {
 	 * @throws JSONException if the input file is not a JSON file, or if the JSON does not meet the standards described above.
 	 * @return the game Source specified by the playsrc key.
 	 */
-	public static Game.Source parseSource(String inputFile) throws IOException {
+	public static GameSource parseSource(String inputFile) throws IOException {
 		return parseSource(new JSONObject(Files.readString(Path.of(inputFile))).getInt("playsrc"));
 	}
 	
@@ -223,9 +222,9 @@ public class InputParsing {
 	 * @throws JSONException if the input does not correspond to a source.
 	 * @return The Game Source corresponding to the given int.
 	 */
-	public static Game.Source parseSource(int src){
+	public static GameSource parseSource(int src) throws IOException {
 		if(src == 0){
-			return Game.Source.NBA_ADVANCED_STATS;
+			return AdvancedStats.open();
 		} else {
 			throw new JSONException("Unrecognized play-by-play source: " + src);
 		}
@@ -487,7 +486,7 @@ public class InputParsing {
 			String secondTimestamp = patternSplit[1];
 			return new TimeInterval(parseTimestamp(firstTimestamp), parseTimestamp(secondTimestamp));
 		} else {
-			int quarter = parseQuarter(constraint);
+			int quarter = Timestamp.parseQuarter(constraint);
 			if(quarter > 4){
 				return new TimeInterval(new Timestamp(quarter, 300), new Timestamp(quarter, 0));
 			} else if(quarter > 0){
@@ -500,39 +499,10 @@ public class InputParsing {
 
 	//Parses a timestamp from a string.
 	private static Timestamp parseTimestamp(String constraint){
-		String[] timestampSplit = constraint.split("\\s+");
-		String timestamp = timestampSplit[0];
-		String quarterString = timestampSplit[1];
-		String[] timeSplit = timestamp.split(":");
-		String minutesString = timeSplit[0];
-		String secondsString = timeSplit[1];
-		int minutes = Integer.parseInt(minutesString);
-		int seconds = Integer.parseInt(secondsString);
-		int quarter = parseQuarter(quarterString);
 		try{
-			return new Timestamp(quarter, (minutes * 60) + seconds);
+			return Timestamp.parse(constraint);
 		} catch(IllegalArgumentException e){
-			throw new JSONException("Timestamp had an illegal amount of time: " + constraint);
-		}
-	}
-
-	//Parses a quarter from a string.
-	private static int parseQuarter(String constraint){
-		if(constraint.substring(constraint.length() - 2).equals("ot")){
-			int overtime; 
-			try{
-				overtime = Integer.parseInt(constraint.substring(0, constraint.length() - 2));
-			} catch(NumberFormatException e){
-				throw new JSONException("Unknown overtime period: " + constraint);
-			}
-			if(overtime <= 0){
-				throw new JSONException("Overtime period was below 1.");
-			}
-			return overtime + 4;
-		} else if(quarterNames.contains(constraint)){
-			return quarterNames.indexOf(constraint) + 1;
-		} else {
-			return 0;
+			throw new JSONException("Malformed timestamp : " + constraint, e);
 		}
 	}
 }

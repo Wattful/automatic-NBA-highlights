@@ -16,7 +16,7 @@ public class HighlightsLogger {
 	private HighlightsLogger(){}
 
 	/**Outputs information from Highlights to the given PrintStream.
-	 * @param ps the PrintStream to use. If ps is null, will not output anything.
+	 * @param ps the PrintStream to use. If ps is null, disables logging.
 	*/
 	public static void setOutput(PrintStream ps){
 		if(ps == null) {

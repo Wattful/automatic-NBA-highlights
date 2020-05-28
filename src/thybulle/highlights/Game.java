@@ -14,7 +14,7 @@ Game acts as the main way for the core package to interact with the datacollecti
 When a client class provides the date, time, and teams of a game
 the Game class will use the datacollection package to get play-by-play data for that game and construct a Game class, 
 or return a reference to such a Game class if it already exists.<br> 
-In order to construct a game, one must use the Game.Source enum.<br>
+In order to get a Game object, one must use a class which implements the GameSource interface.<br>
 @author Owen Kulik
 */
 
@@ -28,8 +28,6 @@ public class Game {
 
 	private final List<Play> data = new LinkedList<Play>();
 
-	private static final Map<GameInfo, Game> interning = new HashMap<GameInfo, Game>();
-
 	/*RI: no fields are null, all plays in data were committed by either awayTeam or homeTeam, !awayTeam.equals(homeTeam), 
 	awayScore != homeScore, awayWon == awayScore > homeScore
 	*/
@@ -39,7 +37,7 @@ public class Game {
 	*/
 
 	//Constructs a game from the given data. This constructor should only be called from the Source.getGame method.
-	private Game(GameInfo gi, Collection<? extends Play> plays){
+	Game(GameInfo gi, Collection<? extends Play> plays){
 		if(plays == null || gi == null){
 			throw new NullPointerException();
 		}
@@ -124,159 +122,39 @@ public class Game {
 	}
 
 	@Override
+	/**Returns a hash code for this Game object.
+	@return a hash code for this game object.
+	*/
+	public int hashCode(){
+		return (date.hashCode() + awayTeam.hashCode() + homeTeam.hashCode()) >> 12;
+	}
+
+	@Override
+	/**Returns a boolean indicating whether this game is equivalent to the given object.<br>
+	They will be considered equivalent if o is a Game and they refer to the same Game.<br>
+	The two objects do not necessarily need to have the exact same plays to be equal.
+	@param o The object to compare to.
+	@return a boolean indicating whether this game is equivalent to the given object.
+	*/
+	public boolean equals(Object o){
+		if(o == null){
+			return false;
+		}
+		if(this == o){
+			return true;
+		}
+		if(!(o instanceof Game)){
+			return false;
+		}
+		Game g = (Game)o;
+		return this.date.equals(g.date) && this.awayTeam.equals(g.awayTeam) && this.homeTeam.equals(g.homeTeam);
+	}
+
+	@Override
 	/**Returns a String representation of this Game.
 	@return a String representation of this Game.
 	*/
 	public String toString(){
 		return date.toString() + " - " + awayTeam.toString() + " at " + homeTeam.toString();
-	}
-
-	/**Enum representing potential sources of game play-by-play data.<br>
-	Each value is a different website from which play-by-play data can be downloaded and parsed.
-	*/
-	public static enum Source {
-		/**stats.nba.com
-		*/
-		NBA_ADVANCED_STATS(AdvancedStats.open());
-
-		private final GameSource source;
-
-		private Source(GameSource s){
-			source = s;
-		}
-
-		/**Returns a Game with play-by-play data from a game which occurred at 
-		the specified date and time between the specified teams, or null if no such Game exists.<br>
-		An assumption is made that no two teams will play each other twice on the same day.<br>
-		This method returns a canonical instance of a Game.<br>
-		If the requested Game has not been created yet, it will be created and returned.<br>
-		If it has been created, a reference to the already created Game is returned.<br>
-		This should be used as the "constructor" for Game.
-		@param time The date of the game.
-		@param away The away team.
-		@param home The home team.
-		@throws IllegalArgumentException if away.equals(home) (a team cannot play itself).
-		@throws NullPointerException if any parameter is null.
-		@return a Game with play-by-play data from a game which occurred at 
-		the specified date and time between the specified teams, or null if no such Game exists.
-		*/
-		public Game getGame(GameInfo gi) throws IOException {
-			if(interning.containsKey(gi)){
-				return interning.get(gi);
-			}
-			Collection<? extends Play> plays = this.downloadGame(gi);
-			if(plays == null) {
-				return null;
-			}
-			Game g = new Game(gi, plays);
-			interning.put(gi, g);
-			return g;
-		}
-
-		//"Downloads" and returns a game corresponding to the given GameInfo.
-		private Collection<? extends Play> downloadGame(GameInfo gi) throws IOException {
-			return source.getPlayByPlay(gi);
-		}
-
-		/**Returns a list of games corresponding to the provided GameInfos.<br>
-		The order of the list corresponds to the iteration order of the provided Collection.
-		@param gi The GameInfos.
-		@return a list of games corresponding to the provided GameInfos.
-		*/
-		public List<Game> getGames(Collection<GameInfo> gis) throws IOException {
-			List<Game> answer = new LinkedList<Game>();
-			for(GameInfo gi : gis){
-				answer.add(getGame(gi));
-			}
-			return answer;
-		}
-
-		/**Returns information for all NBA games played on the given day.
-		@param date The day to get NBA games from.
-		@throws NullPointerException if any paramter is null.
-		@return information for all NBA games played on the given day.
-		*/
-		public List<GameInfo> getGameInfomationOnDay(LocalDate ld) throws IOException {
-			return source.getGameInformationOnDay(ld);
-		}
-
-		/**Returns information for all NBA games played between the given dates, inclusive.
-		@param beginning The beginning date.
-		@param end The end date.
-		@throws NullPointerException if any paramter is null.
-		@throws IllegalArgumentException if end is before beginning.
-		@return information for all NBA games played between the given dates, inclusive.
-		*/
-		public List<GameInfo> getGameInformationBetweenDates(LocalDate beginning, LocalDate end) throws IOException {
-			if(beginning.isAfter(end)){
-				throw new IllegalArgumentException("Beginning date was after end date.");
-			}
-			if(beginning.equals(end)){
-				return getGameInfomationOnDay(beginning);
-			}
-			List<GameInfo> answer = new LinkedList<GameInfo>();
-			for(int i = 0; i < beginning.until(end, ChronoUnit.DAYS); i++){
-				LocalDate d = beginning.plusDays(i);
-				answer.addAll(getGameInfomationOnDay(d));
-			}
-			return answer;
-		}
-
-		/**Returns information for games played by the given teams on date.<br>
-		 * If no teams are specified, returns information for all games on the date.
-		@param date The date to look for a game.
-		@param team The team to get the game of.
-		@throws NullPointerException if any paramter is null.
-		@return information for games played by the given teams on date
-		*/
-		public List<GameInfo> getTeamGameInfomationOnDay(LocalDate date, Team... teams) throws IOException {
-			if(teams.length == 0){
-				return getGameInfomationOnDay(date);
-			}
-			List<GameInfo> answer = new LinkedList<GameInfo>();
-			for(GameInfo g : source.getGameInformationOnDay(date)){
-				for(Team team : teams){
-					if(g.hasTeam(team)){
-						answer.add(g);
-					}
-				}
-			}
-			return answer;
-		}
-
-		/**Returns information for all games played by the given teams between the given dates, inclusive.<br>
-		 * If no teams are specified, returns information for all games between the dates.
-		@param beginning The beginning date.
-		@param end The end date.
-		@param teams The teams to get games of.
-		@throws NullPointerException if any paramter is null.
-		@throws IllegalArgumentException if end is before beginning.
-		@return a list of all GameInfos played by the given team between the given dates, inclusive.	
-		*/
-		public List<GameInfo> getTeamGameInformationBetweenDates(LocalDate beginning, LocalDate end, Team... teams) throws IOException {
-			if(teams.length == 0){
-				return getGameInformationBetweenDates(beginning, end);
-			}
-			if(beginning.isAfter(end)){
-				throw new IllegalArgumentException("Beginning date was after end date.");
-			}
-			if(beginning.equals(end)){
-				return getTeamGameInfomationOnDay(beginning, teams);
-			}
-			List<GameInfo> answer = new LinkedList<GameInfo>();
-			for(int i = 0; i < beginning.until(end, ChronoUnit.DAYS); i++){
-				LocalDate d = beginning.plusDays(i);
-				List<GameInfo> g = getTeamGameInfomationOnDay(d, teams);
-				answer.addAll(g);
-			}
-			return answer;
-		}
-		
-		/**Closes all resources associated with this source.<br>
-		 * Once this method is called, other methods associated with this Game Source can no longer be called.
-		 */
-		public void exit() {
-			source.exit();
-		}
 	}
 }

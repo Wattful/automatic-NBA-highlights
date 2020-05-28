@@ -15,8 +15,7 @@ public class Logging {
 	public Logging() {
 		logging = null;
 	}
-		
-
+	
 	/**Constructs a Logging with the given PrintStream.
 	@param ps the PrintStream to use.
 	*/
@@ -45,7 +44,7 @@ public class Logging {
 		log("WARNING: " +  message);
 	}
 
-	/**Logs the given message with level severe.
+	/**Logs the given message with level error.
 	@param message The message to log.
 	*/
 	public void error(String message){

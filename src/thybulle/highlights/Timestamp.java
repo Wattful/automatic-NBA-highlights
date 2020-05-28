@@ -1,5 +1,7 @@
 package thybulle.highlights;
 
+import java.util.*;
+
 //TODO:
 
 /**Immutable class representing a time in a game, including the quarter and the time remaining in the quarter.
@@ -8,6 +10,7 @@ package thybulle.highlights;
 
 public class Timestamp implements Comparable<Timestamp> {
 	private static final boolean CHECK_REP = true;
+	private static final List<String> quarterNames = List.of("1st", "2nd", "3rd", "4th");
 
 	private final int quarter;
 	private final int timeRemaining;
@@ -71,6 +74,64 @@ public class Timestamp implements Comparable<Timestamp> {
 		return timeRemaining;
 	}
 
+	/**Parses and returns a Timestamp from the given String.<br>
+	The String MUST conform to the following format: MINUTES:SECONDS QUARTER.<br>
+	Minutes and seconds can be any valid integer. 
+	Valid quarter strings are discussed in the  description of the parseQuarter method.
+	@param input The String to parse.
+	@throws NullPointerException if input is null.
+	@throws NumberFormatException if the minutes or seconds are formatted incorrectly.
+	@throws IllegalArgumentException if the time is negative, or there is too much time for an NBA quarter.
+	@return a Timestamp parsed from the given String.
+	*/
+	public static Timestamp parse(String input){
+		String[] timestampSplit = input.split("\\s+");
+		String timestamp = timestampSplit[0];
+		String quarterString = timestampSplit[1];
+		String[] timeSplit = timestamp.split(":");
+		String minutesString = timeSplit[0];
+		String secondsString = timeSplit[1];
+		int minutes = Integer.parseInt(minutesString);
+		int seconds = Integer.parseInt(secondsString);
+		int quarter = parseQuarter(quarterString);
+		//System.out.println(input);
+		//System.out.println(quarterString);
+		//System.out.println(quarter);
+		return new Timestamp(quarter, (minutes * 60) + seconds);
+	}
+
+	/**Parses and returns an int representing a quarter from the given String.<br>
+	1-4 represent the first through fourth quarters, with 5 representing the first overtime, 6 representing secodn overtime, and so on.<br>
+	"1st", "2nd", "3rd", and "4th" are interpreted as the four quarters.<br>
+	"1ot", "2ot", and so on are interpreted as overtime periods. Simply "ot" is NOT accepted.<br>
+	Input for this method is case insensitive.
+	@param input The String to parse.
+	@throws NullPointerExcpeption if input is null.
+	@throws IllegalArgumentException if input does not represent a quarter according to the above specification.
+	@return an int representing a quarter.
+	*/
+	public static int parseQuarter(String input){
+		try{
+			return Integer.parseInt(input);
+		} catch(NumberFormatException e){}
+		if(input.substring(input.length() - 2).toLowerCase().equals("ot")){
+			int overtime; 
+			try{
+				overtime = Integer.parseInt(input.substring(0, input.length() - 2));
+			} catch(NumberFormatException e){
+				throw new IllegalArgumentException("Unknown overtime period: " + input);
+			}
+			if(overtime <= 0){
+				throw new IllegalArgumentException("Overtime period was below 1.");
+			}
+			return overtime + 4;
+		} else if(quarterNames.contains(input)){
+			return quarterNames.indexOf(input) + 1;
+		} else {
+			throw new IllegalArgumentException("Malformed quarter: " + input);
+		}
+	}
+
 	@Override
 	/**Compares the time remaining in the timestamp objects.  <br>
 	The timestamp with more time remaining in the game is considered to be smaller.
@@ -117,17 +178,11 @@ public class Timestamp implements Comparable<Timestamp> {
 	*/
 	public String toString(){
 		String ordinal;
-		if(quarter == 1){
-			ordinal = "1st";
-		} else if(quarter == 2){
-			ordinal = "2nd";
-		} else if(quarter == 3){
-			ordinal = "3rd";
-		} else if(quarter == 4){
-			ordinal = "4th";
+		if(quarter < 5){
+			ordinal = quarterNames.get(quarter - 1);
 		} else {
 			ordinal = (quarter - 4) + "OT";
 		}
-		return ordinal + " " + (timeRemaining/60) + ":" + (String.format("%02d", timeRemaining%60));
+		return (timeRemaining/60) + ":" + (String.format("%02d", timeRemaining%60)) + " " + ordinal;
 	}
 }

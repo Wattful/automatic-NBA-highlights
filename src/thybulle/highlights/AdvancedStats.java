@@ -8,33 +8,48 @@ import java.util.regex.*;
 import java.time.*;
 import java.io.*;
 import java.net.URL;
+import java.time.Duration;
+import java.nio.file.*;
+import java.net.MalformedURLException;
 
 import org.jsoup.*;
 import org.jsoup.nodes.*;
 import org.jsoup.select.*;
-import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.TimeoutException;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
-//import org.openqa.selenium.firefox.FirefoxDriver;
-//import org.openqa.selenium.phantomjs.PhantomJSDriver;
-import org.openqa.selenium.support.ui.WebDriverWait;
-
+import org.openqa.selenium.support.ui.*;
+import org.openqa.selenium.*;
+import org.openqa.selenium.remote.*;
+import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 
-/**Class which parses play-by-play data from stats.nba.com.
+import org.json.*;
+
+/**Class which parses play-by-play data from stats.nba.com.<br>
+stats.nba.com is an excellent source for play-by-play data.<br>
+It includes pre-edited videos of almost all plays, with the notable exception of many dead-ball turnovers.<br>
+Its only major weakness is that it is impossible to tell the difference between players on the same team with the same last name.<br>
+Any plays committed by either player are attributed to the one which shows up first in the box score.<br>
+This source has the ability to save its data locally on the user's machine.<br>
+Doing so will reduce the overall runtime of the program from up to several hours down to a few minutes.<br>
+The options to read and write data can be specified in the JSON file "./advancedstatsconfig.json".
 */
 
-//One problem with current implementation: 
-//no way to distinguish between players on the same team with the same last name.
-
-class AdvancedStats implements GameSource {
-	private static final long DEFAULT_TIMEOUT = 4000;
-	private static final long VIDEO_TIMEOUT = 10000;
-		
+public class AdvancedStats implements GameSource {
 	private WebDriver driver;
+	private final boolean read;
+	private final boolean write;
+	private JSONObject data;
+
+	private static final Browser browser;
+
+	private static final String DEFAULT_DATA_LOCATION = "./advancedstatsdata.json";
+	private static final String DEFAULT_CONFIG_PATH = "./advancedstatsconfig.json";
+
+	private static final long DEFAULT_TIMEOUT = 10000;
+	private static final long VIDEO_TIMEOUT = 60000;
+	private static final long MINIMUM_TIMEOUT = 1000;
+	private static final int MAX_RETRIES = 3;
 	
+	private static final Map<GameInfo, Game> interning = new HashMap<GameInfo, Game>();
 	private static final Map<GameInfo, String> links = new HashMap<GameInfo, String>();
 	private static final Map<Pair<String, String>, PlayType> playTypeParsing = new LinkedHashMap<Pair<String, String>, PlayType>();
 	private static final Map<String, Team> teamAbbreviations = new HashMap<String, Team>();
@@ -43,7 +58,7 @@ class AdvancedStats implements GameSource {
 	private static final String playerRegex = "(" + playerRegexNoGroup + ")";
 	private static final String distanceRegex = "(?:\\d{1,2}' )?";
 	private static final String shotModifiers = "(?:Jump|Alley Oop|Reverse|Finger Roll|Running|Layup|Tip|Putback|Turnaround|Bank|Hook|Step Back|Floating|Pullup|Pull-Up|Cutting|Fadeaway|Driving|Tip|Jumper|Shot| )*";
-	private static final String turnoverModifiers = "(?:Lost Ball|Bad Pass|Offensive Foul|Basket Interference|Step Out of Bounds|Out of Bounds Lost Ball|Traveling|Out of Bounds \\- Bad Pass Turnover|3 Second Violation|Palming|Backcourt|Double Dribble|Discontinue Dribble|Inbound|No| )*";
+	private static final String turnoverModifiers = "(?:Lost Ball|Bad Pass|Offensive Foul|Basket Interference|5 Second Violation|Lane Violation|Step Out of Bounds|Out of Bounds Lost Ball|Traveling|Out of Bounds \\- Bad Pass Turnover|3 Second Violation|Palming|Backcourt|Double Dribble|Discontinue Dribble|Kicked Ball Violation|Inbound|No| )*";
 	
 	private static final String dunkMadeRegex = playerRegex + " " + distanceRegex + shotModifiers + "Dunk (?:Shot )?\\(\\d+ PTS\\).*";
 	private static final String missedDunkRegex = "MISS " + playerRegex + " " + distanceRegex + shotModifiers + "Dunk(?: Shot)?";
@@ -76,6 +91,8 @@ class AdvancedStats implements GameSource {
 	private static final String offensiveFoulRegex = playerRegex + " OFF\\.Foul.*";
 	private static final String chargeRegex = playerRegex + " Offensive Charge Foul.*";
 	private static final String intentionalFoulRegex = playerRegex + " Personal Take Foul.*";
+	private static final String clearPathFoulRegex = playerRegex + " C\\.P\\.FOUL.*";
+	private static final String awayFromThePlayFoulRegex = playerRegex + " AWAY\\.FROM\\.PLAY\\.FOUL.*";
 	
 	private static final String shootingFoulRegexNoGroup = playerRegexNoGroup + " S\\.FOUL.*";
 	
@@ -165,6 +182,8 @@ class AdvancedStats implements GameSource {
 		playTypeParsing.put(p(offensiveFoulRegex, null), PlayType.OFFENSIVE_FOUL);
 		playTypeParsing.put(p(chargeRegex, null), PlayType.OFFENSIVE_FOUL);
 		playTypeParsing.put(p(intentionalFoulRegex, null), PlayType.DEFENSIVE_FOUL);
+		playTypeParsing.put(p(clearPathFoulRegex, null), PlayType.DEFENSIVE_FOUL);
+		playTypeParsing.put(p(awayFromThePlayFoulRegex, null), PlayType.DEFENSIVE_FOUL);
 
 		playTypeParsing.put(p(eightSecondViolationRegex, null), PlayType.EIGHT_SECOND_VIOLATION);
 		playTypeParsing.put(p(shotClockViolationRegex, null), PlayType.SHOT_CLOCK_VIOLATION);
@@ -182,64 +201,108 @@ class AdvancedStats implements GameSource {
 
 		playTypeParsing.put(p(timeoutRegex, null), PlayType.TIMEOUT);
 	}
-	
+
 	static {
-		File f = new File("C:\\Libraries\\ChromeDriverOld\\chromedriver.exe");
-		System.setProperty("webdriver.chrome.driver", f.getAbsolutePath());
+		try{
+			browser = Browser.fromConfigFile(Browser.DEFAULT_CONFIG_PATH);
+		} catch(IOException e){
+			throw new java.io.UncheckedIOException(e);
+		}
 	}
 
 	private static <F, S> Pair<F, S> p(F first, S second){
 		return new Pair<F, S>(first, second);
 	}
 
-	private AdvancedStats(){}
+	private AdvancedStats(boolean read, boolean write) throws IOException {
+		this.read = read;
+		this.write = write;
+		this.data = this.read ? new JSONObject(Files.readString(Path.of(DEFAULT_DATA_LOCATION))) : new JSONObject();
+	}
 
-	/**Returns an AdvancedStats instance.
+	/**Returns an AdvancedStats instance using the specified booleans to determine whether to read or write local data.
+	@param read Whether to read local data.
+	@param write Whether to write local data.
+	@throws IOException if an IO error occurs.
 	@return an AdvancedStats instance.
 	*/
-	static AdvancedStats open(){
-		return new AdvancedStats();
+	public static AdvancedStats open(boolean read, boolean write) throws IOException {
+		return new AdvancedStats(read, write);
+	}
+
+	/**Returns an AdvancedStats instance using the ./advancedstatsconfig.json config file to determine whether to read or write local data.
+	@return an AdvancedStats instance.
+	*/
+	public static AdvancedStats open() throws IOException {
+		JSONObject obj = new JSONObject(Files.readString(Path.of(DEFAULT_CONFIG_PATH)));
+		return new AdvancedStats(obj.getBoolean("read"), obj.getBoolean("write"));
 	}
 	
-	private void setup() {
-		if(driver == null) {
-			driver = new ChromeDriver();
+	private void setup(){
+		if(driver == null){
+			driver = browser.getDriver();
 		}
 	}
 
-	/**Returns all plays in this game, in order of when they occurred, or an empty list if the given GameInfo does not represent a game that occurred.
-	 *@param gi Information about the game to get
-	 *@throws IOException if an IO error occurs.
-	 *@throws NullPointerException if gi is null.
-	 *@return a list of all plays in this game.
-	 */
-	public List<? extends Play> getPlayByPlay(GameInfo gi) throws IOException {
-		setup();
-		String url = getLink(gi);
-		logging.info("=========================================================================================================================");
+	private void reset() throws IOException {
+		this.exit();
+		this.setup();
+	}
+
+	/**Returns a Game object with play-by-play data for the given GameInfo, 
+	or null if the GameInfo does not exist, or if the play-by-play data could not be obtained.
+	@param gi The Game Information.
+	@throws IOException if an IO error occurs.
+	@throws NullPointerException if gi is null.
+	@return a Game object with play-by-play data for the given GameInfo
+	*/
+	public Game getGame(GameInfo gi) throws IOException {
+		try{
+			return getGameInternal(gi);
+		} catch(AdvancedStatsControlFlowException e){
+			logging.error("Could not get play-by-play data for " + gi.toString());
+			return null;
+		}
+	}
+
+	private Game getGameInternal(GameInfo gi) throws IOException {
+		logging.info("====================================================================================");
 		logging.info("Getting play-by-play data for " + gi.toString());
+		if(interning.containsKey(gi)){
+			logging.info("Found cached play-by-play data.");
+			return interning.get(gi);
+		} else if(this.read && this.data.has(gi.toString())){
+			logging.info("Found stored play-by-play data.");
+			Game g = new Game(gi, JSONArrayToPlays(this.data.getJSONArray(gi.toString())));
+			interning.put(gi, g);
+			return g;
+		}
+		logging.info("Using browser to get play-by-play data.");
+		String url = getLink(gi);
 		if(url == null){
-			return new LinkedList<Play>();
+			throw new AdvancedStatsControlFlowException("Could not find a game corresponding to the given GameInformation");
 		}
 		logging.info("Parsing players");
-		Element boxScoreBody = renderPage(url, DEFAULT_TIMEOUT).body();
+		Element boxScoreBody = renderPage(url, DEFAULT_TIMEOUT, MINIMUM_TIMEOUT, ExpectedConditions.visibilityOfElementLocated(By.className("nba-stat-table"))).body();
 		Elements players = boxScoreBody.getElementsByClass("nba-stat-table__overlay");
 		if(players.isEmpty()) {
-			logging.warning("Could not get play-by-play for " + gi.toString());
-			return null;
+			throw new AdvancedStatsControlFlowException("Could not parse players");
 		}
 		LinkedHashSet<Player> awayPlayers = getPlayers(players.get(0).getElementsByClass("player"));
 		LinkedHashSet<Player> homePlayers = getPlayers(players.get(1).getElementsByClass("player"));
 
 		logging.info("Getting play-by-play data");
 		String playByPlayLink = url + "/playbyplay";
-		Element playByPlayBody = renderPage(playByPlayLink, DEFAULT_TIMEOUT).body();
+		Element playByPlayBody = renderPage(playByPlayLink, DEFAULT_TIMEOUT, MINIMUM_TIMEOUT, ExpectedConditions.visibilityOfElementLocated(By.className("boxscore-pbp__inner"))).body();
 		Elements test = playByPlayBody.getElementsByClass("boxscore-pbp__inner");
 		if(test.isEmpty()) {
-			logging.warning("Could not get play-by-play for " + gi.toString());
-			return null;
+			throw new AdvancedStatsControlFlowException("Could not get play-by-play");
 		}
-		Element table = test.get(0).getElementsByAttributeValue("ng-if", "!boxscore.isLive").get(0);
+		Elements test2 = test.get(0).getElementsByAttributeValue("ng-if", "!boxscore.isLive");
+		if(test2.isEmpty()) {
+			throw new AdvancedStatsControlFlowException("Could not get play-by-play");
+		}
+		Element table = test2.get(0);
 		//Yes, this is disgusting. Yes, it is necessary.
 		//Each pair represents all plays committed by each team at a certain time.
 		//The first value is the away team's plays, the second value is the home team's plays.
@@ -281,19 +344,40 @@ class AdvancedStats implements GameSource {
 			
 			Collection<AdvancedStatsPlay> pls = parsePlays(unparsedPlayGroup, awayPlayers, homePlayers, gi.awayTeam(), t);
 			Collection<AdvancedStatsPlay> plsr = parsePlays(unparsedPlayGroup.reversePair(), homePlayers, awayPlayers, gi.homeTeam(), t);
-			if(pls.isEmpty() && plsr.isEmpty()) {
-				if(!unparsedPlayGroup.first().isEmpty()) {
-					logging.warning("No match found for " + unparsedPlayGroup.first().get(0).rawPlay);
-				} else if(!unparsedPlayGroup.second().isEmpty()){
-					logging.warning("No match found for " + unparsedPlayGroup.second().get(0).rawPlay);
-				}
-			}
+			/*if(pls.size() + plsr.size() < unparsedPlayGroup.first().size() + unparsedPlayGroup.second().size()){
+				logging.warning("Match not found for a play in: " + unparsedPlayGroup);
+			}*/
 			
 			plays.addAll(pls);
 			plays.addAll(plsr);
 		}
-		logging.info("Finished. Found " + plays.size() + " plays.");
+		logging.info("Finished. Found " + plays.size() + (plays.size() == 1 ? "play." : " plays."));
+		Game result = new Game(gi, plays);
+		interning.put(gi, result);
+		if(this.write){
+			this.data.put(gi.toString(), playsToJSONArray(plays));
+		}
+		return result;
+	}
+
+	private List<AdvancedStatsPlay> JSONArrayToPlays(JSONArray input){
+		List<AdvancedStatsPlay> plays = new LinkedList<AdvancedStatsPlay>();
+		for(Object o : input){
+			if(!(o instanceof JSONObject)){
+				throw new JSONException("Invalid data json object.");
+			}
+			JSONObject jo = (JSONObject)o;
+			plays.add(AdvancedStatsPlay.fromJSON(this, jo));
+		}
 		return plays;
+	}
+
+	private JSONArray playsToJSONArray(List<AdvancedStatsPlay> input){
+		JSONArray answer = new JSONArray();
+		for(AdvancedStatsPlay asp : input){
+			answer.put(asp.toJSON());
+		}
+		return answer;
 	}
 
 	private LinkedHashSet<Player> getPlayers(Elements players){
@@ -370,6 +454,9 @@ class AdvancedStats implements GameSource {
 				newPlays.add(asp);
 				newPlaysForThisUnparsedPlay.add(asp);
 			}
+			if(newPlaysForThisUnparsedPlay.size() == 0){
+				logging.warning("No match found for " + unparsedPlayGroup.first().get(i));
+			}
 		}
 		return newPlays;
 	}
@@ -400,18 +487,32 @@ class AdvancedStats implements GameSource {
 		return Player.get("", "");
 		//throw new AssertionError();
 	}
-	
-	/**Returns information for all games played on the given day.
+
+	/**Returns information for all games played on the given day, or null if an error occurs.
 	 * @param ld the date.
 	 * @throws IOExcpetion if an IO error occurs.
 	 * @throws NullPointerException if ld is null.
 	 * @return information for all games played on the given day.
 	 */
 	public List<GameInfo> getGameInformationOnDay(LocalDate ld) throws IOException {
-		setup();
+		try {
+			return getGameInformationOnDayInternal(ld);
+		} catch(AdvancedStatsControlFlowException e){
+			logging.error("Could not get game information for " + ld.toString());
+			return null;
+		}
+	}
+	
+	private List<GameInfo> getGameInformationOnDayInternal(LocalDate ld) throws IOException {
+		logging.info("====================================================================================");
 		logging.info("Getting game information for " + ld.toString());
+		if(this.read && this.data.has(ld.toString())){
+			logging.info("Found stored game information.");
+			return JSONArrayToGameInfos(this.data.getJSONArray(ld.toString()));
+		}
+		logging.info("Using browser to get game information.");
 		String url = "https://stats.nba.com/help/videostatus/#!/" + String.format("%02d", ld.getMonthValue()) + "/" + String.format("%02d", ld.getDayOfMonth()) + "/" + ld.getYear();
-		Document dayPage = renderPage(url, DEFAULT_TIMEOUT);
+		Document dayPage = renderPage(url, DEFAULT_TIMEOUT, MINIMUM_TIMEOUT, ExpectedConditions.visibilityOfElementLocated(By.className("stats-video-status-page")));
 		Element dayPageBody = dayPage.body();
 		Elements games = dayPageBody.getElementsByAttribute("data-ng-repeat");
 		List<GameInfo> answer = new LinkedList<GameInfo>();
@@ -430,10 +531,10 @@ class AdvancedStats implements GameSource {
 				awayTeam = teamAbbreviations.get(teamAbbrs[0]);
 				homeTeam = teamAbbreviations.get(teamAbbrs[1]);
 			} else {
-				Element gamePageBody = renderPage(link, DEFAULT_TIMEOUT).body();
+				Element gamePageBody = renderPage(link, DEFAULT_TIMEOUT, MINIMUM_TIMEOUT, ExpectedConditions.visibilityOfElementLocated(By.className("game-summary-team__name"))).body();
 				Elements teams = gamePageBody.getElementsByClass("game-summary-team__name");
 				if(teams == null) {
-					logging.warning("Could not get game information for a game on " + ld.toString());
+					logging.error("Could not get game information for a game on " + ld.toString());
 					continue;
 				}
 				awayTeam = Team.get(teams.get(0).text());
@@ -448,6 +549,34 @@ class AdvancedStats implements GameSource {
 				logging.warning("No video available for " + gi.toString());
 				storeLink(gi, null);
 			}
+		}
+		if(this.write){
+			data.put(ld.toString(), gameInfosToJSONArray(answer));
+		}
+		logging.info("Got game information for " + ld.toString() + ". Found " + answer.size() + (answer.size() == 1 ? " game." : " games."));
+		return answer;
+	}
+
+	private List<GameInfo> JSONArrayToGameInfos(JSONArray input){
+		List<GameInfo> answer = new LinkedList<GameInfo>();
+		for(Object o : input){
+			if(!(o instanceof JSONObject)){
+				throw new JSONException("Invalid stored data.");
+			}
+			JSONObject jo = (JSONObject)o;
+			GameInfo gi = GameInfo.fromJSON(jo);
+			answer.add(gi);
+			storeLink(gi, jo.getString("gamelink"));
+		}
+		return answer;
+	}
+
+	private JSONArray gameInfosToJSONArray(List<GameInfo> input) throws IOException {
+		JSONArray answer = new JSONArray();
+		for(GameInfo gi : input){
+			JSONObject jo = gi.toJSON();
+			jo.put("gamelink", getLink(gi));
+			answer.put(jo);
 		}
 		return answer;
 	}
@@ -468,68 +597,146 @@ class AdvancedStats implements GameSource {
 		logging.warning("No game found for " + gi.toString());
 		return null;
 	}
-	
-	/**Closes the resources associated with AdvancedStats.
-	 * Once this method is called, no other AdvancedStats methods can be called.
-	 */
-	public void exit() {
-		driver.close();
+
+	//If in write mode, flushes the current JSON data
+	private void flush() throws IOException {
+		if(this.write){
+			try (PrintStream out = new PrintStream(new FileOutputStream(DEFAULT_DATA_LOCATION))) {
+    			out.print(this.data.toString());
+			}
+		}
 	}
 	
-	private synchronized Document renderPage(String filePath, long timeout) {
-        driver.get(filePath);
-        Predicate<WebDriver> func = webDriver -> ((JavascriptExecutor) webDriver).executeScript("return document.readyState").equals("complete");
-        //Predicate<WebDriver> func = webDriver -> false;
-        /*Predicate<WebDriver> func = d -> {
-        	try {
-        		d.findElement(By.tagName("data-ng-repeat"));
-        		return true;
-        	} catch(NoSuchElementException e) {
-        		return false;
-        	}
-        };*/
-        //try {
-        new WebDriverWait(driver, timeout/1000).until(func);
+	/**Closes the resources associated with AdvancedStats, and flushes cached data to the local machine if write mode is active.
+	 * Once this method is called, no other AdvancedStats methods can be called.
+	 @throws IOException if an IO error occurs.
+	 */
+	public void exit() throws IOException {
+		this.flush();
+		if(this.driver != null){
+			try{
+				this.driver.quit();
+			} catch(UnreachableBrowserException e){
+				logging.error("Failed to exit browser. You may have to manually kill the browser processes after the program has finished.");
+			}
+			this.driver = null;
+		}
+	}
+
+    private synchronized Document renderPage(String filePath, long timeout, long minTimeout, com.google.common.base.Function<WebDriver, ?> func) throws IOException {
+        return renderPage(filePath, timeout, minTimeout, func, 0);
+    }
+
+    private synchronized Document renderPage(String filePath, long timeout, long minTimeout, com.google.common.base.Function<WebDriver, ?> func, int retry) throws IOException {
+		if(retry >= MAX_RETRIES){
+			throw new AdvancedStatsControlFlowException();
+		}
+		setup();
+		try{
+			driver.get(filePath);
+		} catch(UnreachableBrowserException e){
+			this.reset();
+		}
         try {
-        	Thread.sleep(timeout);
+        	new WebDriverWait(driver, Duration.ofMillis(timeout)).until(func);
+        } catch(TimeoutException e){
+        	this.reset();
+        	return renderPage(filePath, timeout, minTimeout, func, retry + 1);
+        }
+        try {
+        	Thread.sleep(minTimeout);
         } catch(InterruptedException e) {
         	throw new AssertionError();
         }
-        //} catch(TimeoutException e) {}
         return Jsoup.parse(driver.getPageSource());
-    }
+	}
 
 	private static class AdvancedStatsPlay extends Play {
 		private final String playLink;
 		private final AdvancedStats source;
 		private Video v;
+		private String videoLink;
 
 		private AdvancedStatsPlay(AdvancedStats stats, String link, PlayType playType, Timestamp timestamp, Team team, Player... player){
 			super(playType, timestamp, team, player);
-			source = stats;
-			playLink = link;
+			this.source = stats;
+			this.playLink = link;
+			this.videoLink = videoLink;
 		}
 
 		//RI: true
 		//AF: Same as superclass. v is video of entire play.
 
+		/**Returns a Video depicting this play, or null if an error occurs.
+		@throws IOException if an IO error occurs.
+		@return a Video depicting this play.
+		*/
 		public Video getVideo() throws IOException {
+			try{
+				return getVideoInternal();
+			} catch(AdvancedStatsControlFlowException e){
+				logging.error("Could not resolve video for " + this.toString());
+				return null;
+			}
+		}
+
+		private Video getVideoInternal() throws IOException {
+			logging.info("====================================================================================");
+			logging.info("Resolving video for " + this.toString());
 			if(playLink == null){
+				logging.warning("No video exists for " + this.toString());
 				return null;
 			}
 			if(v != null){
+				logging.info("Found cached video.");
 				return v;
 			}
-			source.setup();
-			Element playBody = source.renderPage(this.playLink, VIDEO_TIMEOUT).body();
+			if(this.source.read && this.source.data.has(this.playLink)){
+				logging.info("Found stored video location.");
+				v = new InternetVideo(this.source.data.getString(this.playLink));
+				return v;
+			}
+			logging.info("Using browser to resolve video.");
+			Element playBody = source.renderPage(this.playLink, VIDEO_TIMEOUT, MINIMUM_TIMEOUT, ExpectedConditions.visibilityOfElementLocated(By.id("stats-videojs-player_html5_api"))).body();
 			try {
-				v = new Video(new URL(playBody.getElementById("stats-videojs-player_html5_api").attr("src")));
+				this.videoLink = playBody.getElementById("stats-videojs-player_html5_api").attr("src");
+				v = new InternetVideo(this.videoLink);
+				if(this.source.write){
+					this.source.data.put(this.playLink, this.videoLink);
+				}
+				logging.info("Finished resolving this video.");
 				return v;
 			} catch(NullPointerException e) {
-				logging.warning("Could not get video for " + this.toString());
-				return null;
+				throw new AdvancedStatsControlFlowException();
 			}
-			
+		}
+
+		private JSONObject toJSON(){
+			JSONObject answer = new JSONObject();
+			answer.put("playlink", this.playLink == null ? JSONObject.NULL : this.playLink);
+			answer.put("type", this.getType().toString());
+			answer.put("time", this.getTimestamp().toString());
+			answer.put("team", this.getTeam().toString());
+			JSONArray players = new JSONArray();
+			for(Player p : this.getPlayers()){
+				players.put(p.toString());
+			}
+			answer.put("players", players);
+			return answer;
+		}
+
+		private static AdvancedStatsPlay fromJSON(AdvancedStats stats, JSONObject input){
+			String playLink = input.get("playlink") == JSONObject.NULL ? null : input.getString("playlink");
+			PlayType type = PlayType.parse(input.getString("type"));
+			Timestamp timestamp = Timestamp.parse(input.getString("time"));
+			Team team = Team.get(input.getString("team"));
+			JSONArray arr = input.getJSONArray("players");
+			Player[] players = new Player[arr.length()];
+			for(int i = 0; i < arr.length(); i++){
+				String pl = arr.getString(i);
+				players[i] = Player.get(pl.indexOf(" ") != -1 ? pl.substring(0, pl.indexOf(" ")) : null, pl.substring(pl.indexOf(" ") + 1));
+			}
+			return new AdvancedStatsPlay(stats, playLink, type, timestamp, team, players);
 		}
 	}
 
@@ -545,6 +752,20 @@ class AdvancedStats implements GameSource {
 		
 		public String toString() {
 			return rawPlay;
+		}
+	}
+
+	private static class AdvancedStatsControlFlowException extends RuntimeException {
+		private AdvancedStatsControlFlowException(){
+			super();
+		}
+
+		private AdvancedStatsControlFlowException(String message){
+			super(message);
+		}
+
+		private AdvancedStatsControlFlowException(String message, Throwable cause){
+			super(message, cause);
 		}
 	}
 }

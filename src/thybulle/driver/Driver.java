@@ -9,25 +9,38 @@ import java.time.LocalDate;
 import thybulle.highlights.*;
 import thybulle.misc.*;
 
-//TODO: Improve AdvancedStats page loading
+//TODO: Test new classes, write readme
+//Refactoring: change logging, unify varargs/lists, include Player parse method, include utility methods in TimeInterval, Figure out how to parse broken games
 
 public class Driver {
 	static final Logging logging = new Logging(System.out);
 
 	public static void main(String[] args) throws IOException {
-		//Definitely pre-check these before running the entire program.
 		String inputFile = args[0];
-		String outputFile = args[1];
-		String garbageLocation = args[2];
+		File outputFile = new File(args[1]);
 		
 		HighlightsLogger.setOutput(System.out);
 		
 		HighlightsCompiler hc = Highlights.compiler();
 		logging.info("Parsing input");
 		Collection<Constraint> constraints = InputParsing.parseConstraints(inputFile);
-		Game.Source source = InputParsing.parseSource(inputFile);
+		GameSource source = InputParsing.parseSource(inputFile);
 		Collection<Pair<LocalDate, LocalDate>> dataset = InputParsing.parseDataset(inputFile);
 		Collection<Team> teams = InputParsing.parseTeams(inputFile);
+
+		Runtime.getRuntime().addShutdownHook(
+			new Thread(){
+				public void run(){
+					logging.info("Cleaning up resources");
+					try{
+						source.exit();
+					} catch(IOException e){
+						logging.error("Unable to shutdown properly.");
+					}
+					
+				}
+			}
+		);
 		
 		logging.info("Getting game information");
 		List<GameInfo> information = new LinkedList<GameInfo>();
@@ -36,22 +49,16 @@ public class Driver {
 		}
 		logging.info("Getting play-by-play data");
 		List<Game> games = source.getGames(information);
-		logging.info("Done getting play-by-play data. Found " + games.size() + " games.");
+		logging.info("Done getting play-by-play data. Found " + games.size() + (games.size() == 1 ? " game." : " games."));
 		hc.addGames(games.toArray(new Game[0]));
 		hc.addConstraints(constraints.toArray(new Constraint[0]));
-		logging.info("Getting all plays that satisfy constraints");
+		logging.info("Finding all plays that satisfy constraints");
 		Highlights h = hc.compile();
-		logging.info("Found " + h.size() + " plays.");
-		logging.info("Downloading and saving video");
-		h.saveVideo(new File(outputFile), new File(garbageLocation));
-		logging.info("Done!");
+		logging.info("Found " + h.size() + (h.size() == 1 ? " play." : " plays."));
+		h.saveVideo(outputFile, logging);
+		logging.info("Cleaning up resources");
 		source.exit();
-		
-		/*List<Game> g = Game.Source.NBA_ADVANCED_STATS.getGames(Game.Source.NBA_ADVANCED_STATS.getGameInfomationOnDay(LocalDate.of(2020, 3, 10)));
-		HighlightsCompiler hc = Highlights.compiler();
-		hc.addGames(g.toArray(new Game[0]));
-		hc.addConstraints(PlayType.AND_ONE_DUNK);
-		hc.compile().saveVideo(new File("C:\\Users\\kuliko\\Desktop\\javier\\Basketball\\complete\\mar11andonedunks.mp4"), new File("C:\\Users\\kuliko\\Desktop\\javier\\Basketball\\garbage"));
-		*/
+		logging.info("Done!");
+		System.exit(0);
 	}
 }

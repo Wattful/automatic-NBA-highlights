@@ -17,7 +17,7 @@ public class Player implements Constraint, Comparable<Player> {
 	private final String firstName;
 	private final String lastName;
 
-	private static final Map<Pair<String, String>, Player> interning = new HashMap<Pair<String, String>, Player>(); //please hire me for an internship.
+	private static final Map<Pair<String, String>, Player> interning /*please hire me for an internship.*/ = new HashMap<Pair<String, String>, Player>();
 
 	//RI: lastName is not null.
 	//AF: Represents an immutable player with first name firstName and last name lastName. If a player has one name (ex Nene), firstName is null. 
