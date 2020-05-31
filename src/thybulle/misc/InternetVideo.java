@@ -102,7 +102,7 @@ public class InternetVideo implements Video {
 		if(this == o){
 			return true;
 		}
-		if(!(o instanceof FileVideo)){
+		if(!(o instanceof InternetVideo)){
 			return false;
 		}
 		InternetVideo v = (InternetVideo)o;

@@ -9,6 +9,9 @@ import org.openqa.selenium.chrome.*;
 import org.openqa.selenium.firefox.*;
 import org.openqa.selenium.edge.*;
 import org.openqa.selenium.remote.DesiredCapabilities;
+
+import thybulle.misc.InternetVideo;
+
 import org.openqa.selenium.*;
 
 /**Class which holds options used to construct a webdriver.<br>
@@ -47,9 +50,9 @@ public class Browser {
 		if(!(browserName.toLowerCase().equals("firefox") || browserName.toLowerCase().equals("chrome") || browserName.toLowerCase().equals("edge"))){
 			throw new IllegalArgumentException("Unrecognized or unsupported browser: " + browserName);
 		}
-		this.browserName = browserName;
-		this.headless = headless;
-		this.suppressOutput = suppressOutput;
+		this.browserName = browserName.toLowerCase();
+		this.headless = browserName.toLowerCase().equals("edge") ? false : headless;
+		this.suppressOutput = browserName.toLowerCase().equals("edge") ? false : suppressOutput;
 		this.executablePath = executablePath;
 		checkRep();
 	}
@@ -102,10 +105,39 @@ public class Browser {
 			throw new AssertionError();
 		}
 	}
+	
+	/**Returns this browser's brand name.
+	 * @return this browser's brand name.
+	 */
+	public String browserName() {
+		return this.browserName;
+	}
+	
+	/**Returns whether this Browser is in headless mode.
+	 * @return whether this Browser is in headless mode.
+	 */
+	public boolean headless() {
+		return this.headless;
+	}
+	
+	/**Returns whether this Browser will suppress its outputs.
+	 * @return whether this Browser will suppress its outputs.
+	 */
+	public boolean suppressOutput() {
+		return this.suppressOutput;
+	}
+	
+	/**Returns the path to the driver executable.
+	 * @return the path to the driver executable.
+	 */
+	public String executablePath() {
+		return this.executablePath;
+	}
 
 	/**Returns a Browser object constructed from the given JSON config file according to the specification above.
 	@throws IOException if an IO error occurs.
 	@throws NullPointerException if any parameter is null.
+	@throws JSONException if any required keys are missing.
 	@return a Browser object constructed from the given JSON config file according to the specification above.
 	*/
 	public static Browser fromConfigFile(String configPath) throws IOException {
@@ -114,6 +146,7 @@ public class Browser {
 
 	/**Returns a Browser object constructed from the given JSON object according to the specification above.
 	@throws NullPointerException if any parameter is null.
+	@throws JSONException if any required keys are missing.
 	@return a Browser object constructed from the given JSON object according to the specification above.
 	*/
 	public static Browser fromJSONObject(JSONObject input){
@@ -122,5 +155,38 @@ public class Browser {
 		boolean suppressOutput = input.optBoolean("suppressOutput", true);
 		String executablePath = input.getString("executable");
 		return new Browser(browserName, headless, suppressOutput, executablePath);
+	}
+	
+	/**Returns a hash code for this Browser.
+	 * @return a hash code for this Browser.
+	 */
+	public int hashCode() {
+		return this.browserName.hashCode() + (this.headless ? 1 : 0) + (this.suppressOutput ? 1 : 0) + this.executablePath.hashCode();
+	}
+	
+	/**Returns a boolean indicating whether this Browser is equal to the provided object.<br>
+	 * They are considered equal if and only if the given object is a Browser and all of its fields are equal.
+	 * @param o The object to compare to
+	 * @return a boolean indicating whether this Browser is equal to the provided object.
+	 */
+	public boolean equals(Object o) {
+		if(o == null){
+			return false;
+		}
+		if(this == o){
+			return true;
+		}
+		if(!(o instanceof Browser)){
+			return false;
+		}
+		Browser b = (Browser)o;
+		return this.browserName.equals(b.browserName()) && this.headless == b.headless && this.suppressOutput == b.suppressOutput && this.executablePath.equals(b.executablePath);
+	}
+	
+	/**Returns a String representation of this Browser.
+	 * @return a String representation of this Browser.
+	 */
+	public String toString() {
+		return "Browser: " + this.browserName();
 	}
 }

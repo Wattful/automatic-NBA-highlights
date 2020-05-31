@@ -486,7 +486,13 @@ public class InputParsing {
 			String secondTimestamp = patternSplit[1];
 			return new TimeInterval(parseTimestamp(firstTimestamp), parseTimestamp(secondTimestamp));
 		} else {
-			int quarter = Timestamp.parseQuarter(constraint);
+			int quarter;
+			try {
+				quarter = Timestamp.parseQuarter(constraint);
+			} catch(IllegalArgumentException e) {
+				throw new JSONException("Malformed quarter: " + constraint, e);
+			}
+			
 			if(quarter > 4){
 				return new TimeInterval(new Timestamp(quarter, 300), new Timestamp(quarter, 0));
 			} else if(quarter > 0){
