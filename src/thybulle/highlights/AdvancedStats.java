@@ -79,7 +79,7 @@ public class AdvancedStats implements GameSource {
 
 	private static final String blockRegex = playerRegex + " BLOCK \\(\\d+ BLK\\)";
 
-	private static final String alleyOopRegex = playerRegex + " " + distanceRegex + " Alley Oop .* \\(\\d+ PTS\\) \\(" + playerRegex + " \\d+ AST\\)";
+	private static final String alleyOopRegex = playerRegex + " " + distanceRegex + "Alley Oop .* \\(\\d+ PTS\\) \\(" + playerRegex + " \\d+ AST\\)";
 
 	private static final String teamTechnicalRegex = ".* T\\.Foul \\(Def. 3 Sec .*\\).*";
 	private static final String flagrantFoul1Regex = playerRegex + " FLAGRANT\\.FOUL\\.TYPE1.*";

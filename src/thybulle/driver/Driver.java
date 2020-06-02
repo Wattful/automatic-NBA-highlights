@@ -10,7 +10,8 @@ import thybulle.highlights.*;
 import thybulle.misc.*;
 
 //TODO: Test new classes, write readme
-//Refactoring: change logging, unify varargs/lists, include Player parse method, include utility methods in TimeInterval, Figure out how to parse broken games
+//To test: Browser
+//Refactoring: unify varargs/lists, include Player parse method, include utility methods in TimeInterval, Figure out how to parse broken games, change browser name to enum
 
 public class Driver {
 	static final Logging logging = new Logging(System.out);
@@ -56,8 +57,6 @@ public class Driver {
 		Highlights h = hc.compile();
 		logging.info("Found " + h.size() + (h.size() == 1 ? " play." : " plays."));
 		h.saveVideo(outputFile, logging);
-		logging.info("Cleaning up resources");
-		source.exit();
 		logging.info("Done!");
 		System.exit(0);
 	}
