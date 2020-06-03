@@ -638,7 +638,7 @@ public class AdvancedStats implements GameSource {
 			this.reset();
 		}
         try {
-        	new WebDriverWait(driver, Duration.ofMillis(timeout)).until(func);
+        	new WebDriverWait(driver, timeout/*Duration.ofMillis(timeout)*/).until(func);
         } catch(TimeoutException e){
         	this.reset();
         	return renderPage(filePath, timeout, minTimeout, func, retry + 1);
