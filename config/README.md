@@ -23,7 +23,7 @@ In order for the program to use a browser, you must install that browser's drive
 
 A driver is an executable which allows programs to automate browser operation.
 
-Drivers for each browser can be found here: [Firefox](), [Chrome](), [Edge]()
+Drivers for each browser can be found here: [Firefox](https://github.com/mozilla/geckodriver/releases), [Chrome](https://chromedriver.chromium.org/), [Edge](https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/)
 
 browserconfig.json contains four keys, each of which is mandatory.
 
