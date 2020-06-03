@@ -6,7 +6,7 @@ The program will then find all plays from the specified games which meet the giv
 
 This is accomplished using a source: A method of retrieving play-by-play and video data. The details of sources are discussed below.
 
-#Setup
+# Setup
 Before running the program, you must do all of the following steps:
 
 1. Clone this repository (obviously)
@@ -14,29 +14,29 @@ Before running the program, you must do all of the following steps:
 3. Install browser driver (explained in config folder README)
 4. Specify settings in config files (explained in config folder README)
 
-#Input
+# Input
 The program takes input from the command line, a JSON input file, and several JSON config files.
 
-##JSON Input
+## JSON Input
 The main JSON input file is the program's primary way of taking input.
 
 Through this file, the user specifies what plays they want to see, which games they would like to see plays from, and whay source they would like to use.
 
 The specification for this input file can be found in the README for the config folder.
 
-##Config Files
+## Config Files
 The program reads settings from several JSON config files.
 
 Default versions and specifications for these files can be found in the config folder.
 
 **Look at these config files before running the program.** Some settings do not have a valid default value and must be set manually before the program can be run.
 
-##Command Line Input
+## Command Line Input
 The program takes two command line options, both of which are mandatory.
 
 The first one is the path to the JSON input file, and the second one is the desired location of the finished video file.
 
-#Dependencies
+# Dependencies
 The program has three dependencies:
 
 [JSON-java](https://github.com/stleary/JSON-java)
@@ -66,8 +66,8 @@ The following maven pom.xml file can be used to get all required JAR files:
 ```
 Use maven or paste the XML into [JAR-download.com](https://jar-download.com/download-handling.php) to get required JAR files.
 
-#Build and Run
-This project is written in Java, and as such it is compiled and run using the [`javac`](https://docs.oracle.com/en/java/javase/13/docs/specs/man/javac.html) and [`java`](https://docs.oracle.com/en/java/javase/13/docs/specs/man/javac.html) commands, respectively (links contain more information about the commands).
+# Build and Run
+This project is written in Java, and as such it is compiled and run using the [`javac`](https://docs.oracle.com/en/java/javase/13/docs/specs/man/javac.html) and [`java`](https://docs.oracle.com/en/java/javase/13/docs/specs/man/java.html) commands, respectively (links contain more information about the commands).
 
 To build, navigate to the source directory, then run:
 ```
@@ -85,14 +85,14 @@ Replacing INPUT.JSON_PATH with the path to the input.json file, and OUTPUT_FILE_
 
 Make sure that the classpath is the same when compiling and running. Discrepancies between the compile-time and runtime classpaths can lead to mysterious runtime errors.
 
-#Sources
+# Sources
 A source is a method of retrieving play-by-play and video data.
 
 The user can decide which source they use to get data.
 
 There is currently only one source: NBA Advanced Stats.
 
-##NBA Advanced Stats
+## NBA Advanced Stats
 NBA Advanced Stats pulls its data from stats.nba.com, a source of official NBA data.
 
 This source has several advantages. Notably, it has pre-editied, high quality clips of almost every play.
@@ -105,7 +105,7 @@ There's not much that can be done about this without unacceptably increasing the
 
 So if you want to watch highlights of Giannis, you'll have to sit through the highlights of Thanasis.
 
-##Developing New Sources
+## Developing New Sources
 
 The application design of the program makes it simple to develop new sources.
 
@@ -113,7 +113,7 @@ In order to do this, one must write a class which implements the GameSource inte
 
 The highlights/AdvancedStats.java class is a blueprint as to how a Source is implemented. 
 
-##Data Storage
+## Data Storage
 Sources which collect data from the internet can drastically reduce their runtime by storing data on the user's local machine.
 
 NBA Advanced stats has the option to do this. A full season of play-by-play data takes up approximately 500 megabytes of data.
