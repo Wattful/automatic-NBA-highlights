@@ -30,7 +30,7 @@ This JSON file can have up to four keys, two of which are mandatory.<br>
 public class Browser {
 	private static final boolean CHECK_REP = true;
 
-	static final String DEFAULT_CONFIG_PATH = "./browserConfig.json";
+	static final String DEFAULT_CONFIG_PATH = "../config/browserconfig.json";
 
 	private final String browserName;
 	private final boolean headless;

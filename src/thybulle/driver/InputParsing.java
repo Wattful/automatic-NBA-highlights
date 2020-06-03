@@ -53,7 +53,7 @@ The JSON object should have four keys, each of which are mandatory:
 			</li>
 		</ul>
 	</li>
-	<li>datasetteam - Optional key. An array of strings representing teams to limit the dataset to.<br>
+	<li>datasetteam - Mandatory key. An array of strings representing teams to limit the dataset to.<br>
 		Each string represents a team. If specified, the dataset will be limited to games played by the listed teams.<br>
 		Team names must be listed in full, case insensitive.<br>
 		For example, {@code ["Milwaukee Bucks"]} will limit the dataset to games played by the Milwaukee Bucks,

@@ -42,7 +42,7 @@ public class AdvancedStats implements GameSource {
 	private static final Browser browser;
 
 	private static final String DEFAULT_DATA_LOCATION = "./advancedstatsdata.json";
-	private static final String DEFAULT_CONFIG_PATH = "./advancedstatsconfig.json";
+	private static final String DEFAULT_CONFIG_PATH = "../config/advancedstatsconfig.json";
 
 	private static final long DEFAULT_TIMEOUT = 10000;
 	private static final long VIDEO_TIMEOUT = 60000;
@@ -217,7 +217,8 @@ public class AdvancedStats implements GameSource {
 	private AdvancedStats(boolean read, boolean write) throws IOException {
 		this.read = read;
 		this.write = write;
-		this.data = this.read ? new JSONObject(Files.readString(Path.of(DEFAULT_DATA_LOCATION))) : new JSONObject();
+		File f = new File(DEFAULT_DATA_LOCATION);
+		this.data = this.read && f.exists() ? new JSONObject(Files.readString(Path.of(DEFAULT_DATA_LOCATION))) : new JSONObject();
 	}
 
 	/**Returns an AdvancedStats instance using the specified booleans to determine whether to read or write local data.
