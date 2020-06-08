@@ -15,7 +15,7 @@ public class Highlights {
 	private static final boolean CHECK_REP = true;
 
 	private final List<Play> plays;
-	private Video video;
+	private FileVideo video;
 
 	//RI: plays is not null.
 	//AF: Represents a Highlights video. plays is all the plays in this video, in order.
@@ -44,7 +44,7 @@ public class Highlights {
 	@throws NullPointerException if any parameters are null.
 	@return a video for this Highlights object.
 	*/
-	public Video saveVideo(File path) throws IOException {
+	public FileVideo saveVideo(File path) throws IOException {
 		return saveVideo(path, new Logging());
 	}
 
@@ -54,7 +54,7 @@ public class Highlights {
 	@throws NullPointerException if any parameters are null.
 	@return a video for this Highlights object.
 	*/
-	public Video saveVideo(File path, Logging output) throws IOException {
+	public FileVideo saveVideo(File path, Logging output) throws IOException {
 		if(video != null){
 			return video;
 		}
@@ -68,7 +68,7 @@ public class Highlights {
 		}
 		output.info("Finished resolving play videos.");
 		//@SuppressWarnings("unchecked")
-		video = Video.combineVideos(path, output, v.toArray(new Video[0]));
+		video = FileVideo.combineVideos(path, output, v.toArray(new Video[0]));
 		return video;
 	}
 

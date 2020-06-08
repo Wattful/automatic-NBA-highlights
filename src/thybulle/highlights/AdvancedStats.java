@@ -79,7 +79,7 @@ public class AdvancedStats implements GameSource {
 
 	private static final String blockRegex = playerRegex + " BLOCK \\(\\d+ BLK\\)";
 
-	private static final String alleyOopRegex = playerRegex + " " + distanceRegex + "Alley Oop .* \\(\\d+ PTS\\) \\(" + playerRegex + " \\d+ AST\\)";
+	private static final String alleyOopRegex = playerRegex + " " + distanceRegex + shotModifiers + "Alley Oop .* \\(\\d+ PTS\\) \\(" + playerRegex + " \\d+ AST\\)";
 
 	private static final String teamTechnicalRegex = ".* T\\.Foul \\(Def. 3 Sec .*\\).*";
 	private static final String flagrantFoul1Regex = playerRegex + " FLAGRANT\\.FOUL\\.TYPE1.*";
@@ -259,7 +259,9 @@ public class AdvancedStats implements GameSource {
 	*/
 	public Game getGame(GameInfo gi) throws IOException {
 		try{
-			return getGameInternal(gi);
+			synchronized(this){
+				return getGameInternal(gi);
+			}
 		} catch(AdvancedStatsControlFlowException e){
 			logging.error("Could not get play-by-play data for " + gi.toString());
 			return null;
@@ -497,7 +499,9 @@ public class AdvancedStats implements GameSource {
 	 */
 	public List<GameInfo> getGameInformationOnDay(LocalDate ld) throws IOException {
 		try {
-			return getGameInformationOnDayInternal(ld);
+			synchronized(this){
+				return getGameInformationOnDayInternal(ld);
+			}
 		} catch(AdvancedStatsControlFlowException e){
 			logging.error("Could not get game information for " + ld.toString());
 			return null;
@@ -647,7 +651,7 @@ public class AdvancedStats implements GameSource {
         try {
         	Thread.sleep(minTimeout);
         } catch(InterruptedException e) {
-        	throw new AssertionError();
+        	Thread.currentThread().interrupt();
         }
         return Jsoup.parse(driver.getPageSource());
 	}

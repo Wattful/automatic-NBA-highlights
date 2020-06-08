@@ -10,9 +10,44 @@ This is accomplished using a source: A method of retrieving play-by-play and vid
 Before running the program, you must do all of the following steps:
 
 1. Clone this repository (obviously)
+2. Install FFMpeg and add it to the PATH
 2. Get required JAR files (explained in the Dependencies section below)
 3. Install browser driver (explained in config folder README)
 4. Specify settings in config files (explained in config folder README)
+
+# Dependencies
+The program has four dependencies:
+
+[JSON-java](https://github.com/stleary/JSON-java)
+
+[JSoup](https://github.com/jhy/jsoup)
+
+[Selenium](https://github.com/SeleniumHQ/selenium)
+
+[FFMpeg](https://github.com/ffmpeg/ffmpeg)
+
+The following maven pom.xml file can be used to get all required JAR files:
+
+```
+<dependency>
+    <groupId>org.json</groupId>
+    <artifactId>json</artifactId>
+    <version>20200518</version>
+</dependency>
+<dependency>
+    <groupId>org.jsoup</groupId>
+    <artifactId>jsoup</artifactId>
+    <version>1.13.1</version>
+</dependency>
+<dependency>
+    <groupId>org.seleniumhq.selenium</groupId>
+    <artifactId>selenium-java</artifactId>
+    <version>3.141.59</version>
+</dependency>
+```
+Use maven or paste the XML into [JAR-download.com](https://jar-download.com/online-maven-download-tool.php) to get required JAR files.
+
+Since FFMPeg is a command line tool as opposed to a Java library, it must be installed separately. See [here](https://www.ffmpeg.org/download.html).
 
 # Input
 The program takes input from the command line, a JSON input file, and several JSON config files.
@@ -36,36 +71,6 @@ The program takes two command line options, both of which are mandatory.
 
 The first one is the path to the JSON input file, and the second one is the desired location of the finished video file.
 
-# Dependencies
-The program has three dependencies:
-
-[JSON-java](https://github.com/stleary/JSON-java)
-
-[JSoup](https://github.com/jhy/jsoup)
-
-[Selenium](https://github.com/SeleniumHQ/selenium)
-
-The following maven pom.xml file can be used to get all required JAR files:
-
-```
-<dependency>
-    <groupId>org.json</groupId>
-    <artifactId>json</artifactId>
-    <version>20200518</version>
-</dependency>
-<dependency>
-    <groupId>org.jsoup</groupId>
-    <artifactId>jsoup</artifactId>
-    <version>1.13.1</version>
-</dependency>
-<dependency>
-    <groupId>org.seleniumhq.selenium</groupId>
-    <artifactId>selenium-java</artifactId>
-    <version>3.141.59</version>
-</dependency>
-```
-Use maven or paste the XML into [JAR-download.com](https://jar-download.com/download-handling.php) to get required JAR files.
-
 # Build and Run
 This project is written in Java, and as such it is compiled and run using the [`javac`](https://docs.oracle.com/en/java/javase/13/docs/specs/man/javac.html) and [`java`](https://docs.oracle.com/en/java/javase/13/docs/specs/man/java.html) commands, respectively (links contain more information about the commands).
 
@@ -84,6 +89,13 @@ java -cp CLASSPATH thybulle.driver.Driver "INPUT.JSON_PATH" "OUTPUT_FILE_PATH"
 Replacing INPUT.JSON_PATH with the path to the input.json file, and OUTPUT_FILE_PATH with the desired location to save the finished video file.
 
 Make sure that the classpath is the same when compiling and running. Discrepancies between the compile-time and runtime classpaths can lead to mysterious runtime errors.
+
+# Aborting During Runtime
+There are two ways to abort the program during runtime:
+
+Keyboard Interrupting will cause the program to exit immediately, without saving data or killing the browser drivers.
+
+Inputting "quit" or "exit" will cause the program to attempt to save its data and exit browser drivers before shutting down. This may take several seconds.
 
 # Sources
 A source is a method of retrieving play-by-play and video data.

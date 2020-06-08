@@ -9,7 +9,7 @@ import java.time.LocalDate;
 import thybulle.highlights.*;
 import thybulle.misc.*;
 
-//TODO: Test new classes, write readme
+//TODO: Improve readme
 //To test: Browser
 //Refactoring: unify varargs/lists, include Player parse method, include utility methods in TimeInterval, Figure out how to parse broken games, change browser name to enum
 
@@ -17,6 +17,7 @@ public class Driver {
 	static final Logging logging = new Logging(System.out);
 
 	public static void main(String[] args) throws IOException {
+		checkFFMpeg();
 		String inputFile = args[0];
 		File outputFile = new File(args[1]);
 		
@@ -29,20 +30,24 @@ public class Driver {
 		Collection<Pair<LocalDate, LocalDate>> dataset = InputParsing.parseDataset(inputFile);
 		Collection<Team> teams = InputParsing.parseTeams(inputFile);
 
-		Runtime.getRuntime().addShutdownHook(
-			new Thread(){
-				public void run(){
+		new Thread(() -> {
+			Scanner keyboard = new Scanner(System.in);
+			while(keyboard.hasNextLine()){
+				String input = keyboard.nextLine();
+				if(input.toLowerCase().equals("quit") || input.toLowerCase().equals("exit") ){
 					logging.info("Cleaning up resources");
 					try{
-						source.exit();
+						synchronized(source){
+							source.exit();
+							System.exit(0);
+						}
 					} catch(IOException e){
-						logging.error("Unable to shutdown properly.");
+						throw new UncheckedIOException(e);
 					}
-					
 				}
 			}
-		);
-		
+		}).start();
+
 		logging.info("Getting game information");
 		List<GameInfo> information = new LinkedList<GameInfo>();
 		for(Pair<LocalDate, LocalDate> p : dataset) {
@@ -56,8 +61,23 @@ public class Driver {
 		logging.info("Finding all plays that satisfy constraints");
 		Highlights h = hc.compile();
 		logging.info("Found " + h.size() + (h.size() == 1 ? " play." : " plays."));
+		if(h.size() == 0){
+			logging.error("No plays were found. Exiting.");
+			source.exit();
+			System.exit(0);
+		}
 		h.saveVideo(outputFile, logging);
+		logging.info("Cleaning up resources.");
+		source.exit();
 		logging.info("Done!");
 		System.exit(0);
+	}
+
+	private static void checkFFMpeg(){
+		try{
+			Runtime.getRuntime().exec("ffmpeg");
+		} catch(IOException e){
+			throw new IllegalStateException("ffmpeg is not installed or has not been added to the PATH.", e);
+		}
 	}
 }
