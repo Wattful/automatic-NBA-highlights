@@ -13,9 +13,9 @@ Before running the program, you must do all of the following steps:
 
 1. Clone this repository (obviously)
 2. Install FFMpeg and add it to the PATH
-2. Get required JAR files (explained in the Dependencies section below)
-3. Install browser driver (explained in config folder README)
-4. Specify settings in config files (explained in config folder README)
+3. Get required JAR files (explained in the Dependencies section below)
+4. Install browser driver (explained in config folder README)
+5. Specify settings in config files (explained in config folder README)
 
 # Dependencies
 The program has four dependencies:
