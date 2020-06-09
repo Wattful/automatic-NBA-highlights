@@ -1,5 +1,7 @@
 A tool which allows users to automatically edit together NBA highilight videos.
 
+An example of a video created using this program can be found [here](https://youtu.be/udCukXcvWbo)
+
 The user specifies the types of plays that they would like to see, as well as what games they would like to include plays from.
 
 The program will then find all plays from the specified games which meet the given requirements, and edit a video of them together.
