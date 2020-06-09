@@ -61,7 +61,7 @@ public class Highlights {
 		if(path == null){
 			throw new NullPointerException();
 		}
-		List<Video> v = new LinkedList<Video>();
+		Set<Video> v = new LinkedHashSet<Video>();
 		output.info("Resolving " + plays.size() + (plays.size() == 1 ? " play video." : " play videos."));
 		for(Play p : plays){
 			v.add(p.getVideo());

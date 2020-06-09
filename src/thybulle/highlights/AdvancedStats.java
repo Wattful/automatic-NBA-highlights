@@ -38,6 +38,7 @@ public class AdvancedStats implements GameSource {
 	private final boolean read;
 	private final boolean write;
 	private JSONObject data;
+	private final String writeLocation;
 
 	private static final Browser browser;
 
@@ -214,21 +215,49 @@ public class AdvancedStats implements GameSource {
 		return new Pair<F, S>(first, second);
 	}
 
-	private AdvancedStats(boolean read, boolean write) throws IOException {
+	private AdvancedStats(boolean read, boolean write, String readPath, String writePath) {
 		this.read = read;
 		this.write = write;
-		File f = new File(DEFAULT_DATA_LOCATION);
-		this.data = this.read && f.exists() ? new JSONObject(Files.readString(Path.of(DEFAULT_DATA_LOCATION))) : new JSONObject();
+		this.writeLocation = writePath;
+		File f = new File(readPath);
+		if(this.read){
+			if(!f.exists()){
+				logging.warning("No data file exists at " + readPath + ". Running without pre-read data.");
+				this.data = new JSONObject();
+			} else {
+				try{
+					this.data =  new JSONObject(Files.readString(Path.of(readPath)));
+				} catch(IOException | JSONException e){
+					logging.error("Advanced stats data file at "  + readPath + " was improperly formatted. Running without pre-read data.");
+					logging.error(e.getMessage());
+					this.data = new JSONObject();
+				}
+			}
+		} else {
+			this.data = new JSONObject();
+		}
 	}
 
-	/**Returns an AdvancedStats instance using the specified booleans to determine whether to read or write local data.
+	/**Returns an AdvancedStats instance using the specified booleans to determine whether to read or write local data, and using "./advancedstatsdata.json" at the data location.
 	@param read Whether to read local data.
 	@param write Whether to write local data.
 	@throws IOException if an IO error occurs.
 	@return an AdvancedStats instance.
 	*/
-	public static AdvancedStats open(boolean read, boolean write) throws IOException {
-		return new AdvancedStats(read, write);
+	public static AdvancedStats open(boolean read, boolean write) {
+		return new AdvancedStats(read, write, DEFAULT_DATA_LOCATION, DEFAULT_DATA_LOCATION);
+	}
+
+	/**Returns an AdvancedStats instance using the specified booleans to determine whether to read or write local data, and using the given path as the data file location.
+	@param read Whether to read local data.
+	@param write Whether to write local data.
+	@param readLocation Path to the Advanced Stats data file. Can be null if read == false.
+	@param writeLocation Path to save any collected data to. Can be null if write == false.
+	@throws IOException if an IO error occurs.
+	@return an AdvancedStats instance.
+	*/
+	public static AdvancedStats open(boolean read, boolean write, String readLocation, String writeLocation) {
+		return new AdvancedStats(read, write, readLocation, writeLocation);
 	}
 
 	/**Returns an AdvancedStats instance using the ./advancedstatsconfig.json config file to determine whether to read or write local data.
@@ -236,7 +265,7 @@ public class AdvancedStats implements GameSource {
 	*/
 	public static AdvancedStats open() throws IOException {
 		JSONObject obj = new JSONObject(Files.readString(Path.of(DEFAULT_CONFIG_PATH)));
-		return new AdvancedStats(obj.getBoolean("read"), obj.getBoolean("write"));
+		return new AdvancedStats(obj.getBoolean("read"), obj.getBoolean("write"), obj.optString("readLocation", DEFAULT_DATA_LOCATION), obj.optString("writeLocation", DEFAULT_DATA_LOCATION));
 	}
 	
 	private void setup(){
@@ -606,7 +635,7 @@ public class AdvancedStats implements GameSource {
 	//If in write mode, flushes the current JSON data
 	private void flush() throws IOException {
 		if(this.write){
-			try (PrintStream out = new PrintStream(new FileOutputStream(DEFAULT_DATA_LOCATION))) {
+			try (PrintStream out = new PrintStream(new FileOutputStream(this.writeLocation))) {
     			out.print(this.data.toString());
 			}
 		}

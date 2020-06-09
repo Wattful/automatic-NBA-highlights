@@ -1,16 +1,22 @@
 The program reads settings and input from various JSON files.
 
-Default versions of these files are located in this folder, and specifications for these files follow.
+Default versions of these files are located in the config/default folder.
+
+After looking at the config files and editing the settings, copy them from the config/default folder to the config folder, which is where the program looks for config files.
 
 Note that the locations and names for the config files (NOT the input.json file) are hardcoded, so changing their locations or names will lead to a runtime error. (I know, I know, bad application design).
+
+Here are the specifications for the config and input files:
 
 # advancedstatsconfig.json
 advancedstatsconfig.json contains options for the NBA Advanced Stats source.
 
-There are two keys, both of which are mandatory.
+There are four keys, two of which are mandatory.
 
-* read - boolean. If true, Advanced Stats will read locally stored play-by-play data. If false, will always use browser to get data.
-* write - boolean. If true, Advanced Stats will locally store all data read during runtime. If false, will not store data.
+* read - boolean. Mandatory key. If true, Advanced Stats will read locally stored play-by-play data. If false, will always use browser to get data.
+* write - boolean. Mandatory key. If true, Advanced Stats will locally store all data read during runtime. If false, will not store data.
+* readLocation - String. Optional. Specifies the location of an Advanced Stats JSON data file to read from. If not specified, defaults to "./advancedstatsdata.json". Ignored if read is false.
+* writeLocation - String. Optional. Specifies where to write Advanced Stats data. If not specified, defaults to "./advancedstatsdata.json". Ignored if write is false.
 
 # browserconfig.json
 Sources use a web browser to collect data from the internet.
