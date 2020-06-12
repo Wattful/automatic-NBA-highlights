@@ -62,11 +62,11 @@ It contains four keys, each of which are mandatory.
 				* a - all-star game and the rising stars challenge
 					(Note that the only current source does NOT have video for all star games).
 			The order and case of the letters do not matter.
-			For example, {@code "2019-2020r"} Includes regular season games from the 2019-20 season.
-			{@code "2016-2017pef"} includes playoff, finals and preseason games from the 2016-17 season.
+			For example, `"2019-2020r"` Includes regular season games from the 2019-20 season.
+			`"2016-2017pef"` includes playoff, finals and preseason games from the 2016-17 season.
 			If one wishes to include multiple consecutive seasons, they can put the first year as the first year of the starting season, 
 			and the second year as the last year of the final season.
-				For example, {@code "2015-2019ra"} includes regular season and all-star games from the 2015-16 season to the 2018-19 season.
+				For example, `"2015-2019ra"` includes regular season and all-star games from the 2015-16 season to the 2018-19 season.
 * datasetteam - Array of Strings. Represents teams to limit the dataset to.
 		Each string represents a team. If specified, the dataset will be limited to games played by the listed teams.
 		Team names must be listed in full, case insensitive (A list of NBA team's full, official names can be found in the highlights/Team.java class). 
@@ -82,21 +82,21 @@ It contains four keys, each of which are mandatory.
 	For example, a play will satisfy `"Player: Giannis Antetokounmpo"` if it involves Giannis Antetokounmpo.
 	* Team - Represented as a String, case-insensitive, formatted as {`"Team: TEAM_NAME"`. A play satisfies this constraint if it was committed by this team. 
 	The string must be a team's official, full name (See `highlights/Team.java` for a list of NBA teams and their official, full names.)
-	For example, a play will satisfy {@code "Team: Portland Trail Blazers"} if it was committed by the Portland Trail Blazers.
-	* Play type - Represented as a String, case-insensitive, formatted as {@code "Type: TYPE_NAME"}. A play satisfies this constraint if it is of this play type.
+	For example, a play will satisfy `"Team: Portland Trail Blazers"` if it was committed by the Portland Trail Blazers.
+	* Play type - Represented as a String, case-insensitive, formatted as `"Type: TYPE_NAME"`. A play satisfies this constraint if it is of this play type.
 	All play types are defined as enum constants in highlights/PlayType.java. The given type must match a play type defined in that class exactly (case insensitive), with the exception that underscores can be replaced with spaces.
 	For example, the strings `"Type: AND_ONE_DUNK"`, `"Type: AND ONE DUNK"`, `"Type: and_one_dunk"`, and `"Type: AND ONE_DuNk"` all correspond to the PlayType.AND_ONE_DUNK enum constant.
-	* Time of game - Represented as a String, case-insensitive, formatted as {@code "Time: TIME_OF_GAME"}. A play satisfies this constraint if it is within
+	* Time of game - Represented as a String, case-insensitive, formatted as `"Time: TIME_OF_GAME"`. A play satisfies this constraint if it is within
 	the specified time of game. Time of game can be specified in two ways: 
-		* Quarter - The play occurs within the specified quarter or overtime period. Acceptable strings for this format include {@code "1st"}, 
-			{@code "2nd"}, {@code "3rd"}, {@code "4th"}, {@code "ot"}, {@code "1ot"}, {@code "2ot"}, and so on.
-			For example, a play will satisfy {@code "Time: 1st"} if it occurred in the first quarter.
+		* Quarter - The play occurs within the specified quarter or overtime period. Acceptable strings for this format include `code "1st"`, 
+			`"2nd"`, `"3rd"`, `"4th"`, `"ot"`, `"1ot"`, `"2ot"`, and so on.
+			For example, a play will satisfy `"Time: 1st"` if it occurred in the first quarter.
 			Note that "ot" specifies *any* overtime period, not just the first overtime. 
 			If one only wants to include the first overtime, they should use "1ot".
 		* Specific time - The play occurs between the specified times in the game. A time is represented as a number of minutes and a number of seconds,
 			followed by the quarter or overtime period. Note that the quarter name must be separated from the time by at least a space.
 			The two times are separated by a dash.
-			For example, a play will satisfy {@code "Time: 03:00 4th-00:00 1ot"} if it occurs between three minutes left in the fourth and the end of  
+			For example, a play will satisfy `"Time: 03:00 4th-00:00 1ot"` if it occurs between three minutes left in the fourth and the end of  
 			first ovetime, inclusive.
 	* Not constraint - Represented as an object with a single key, `"NOT"` (case insensitive), corresponding to a value of a single constraint.
 	A play satisfies this constraint if it does not satisfy the constraint in the value.
@@ -107,7 +107,7 @@ It contains four keys, each of which are mandatory.
 	by the Minnesota Timberwolves.
 	* Or constraint - Represented as an object with a single key, `"OR"` (case insensitive), corresponding to a value of an array of constraints.
 	A play satisfies this constraint if it satisfies any of the constraints in the array.
-	For example, a play will satisfy {@code {"or" : ["Player: Lebron James", "Player: Anthony Davis"]}} if it was committed 
+	For example, a play will satisfy `{"or" : ["Player: Lebron James", "Player: Anthony Davis"]}` if it was committed 
 	by either Lebron James or Anthony Davis.
 	
 These constraints can be nested within each other.

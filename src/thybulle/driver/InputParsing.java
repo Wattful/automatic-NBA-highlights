@@ -75,7 +75,7 @@ The JSON object should have four keys, each of which are mandatory:
 			</li>
 			<li>Play type - Represented as a String, case-insensitive, formatted as {@code "Type: TYPE_NAME"}. A play satisfies this constraint if it is of this play type.
 				(See {@link thybulle.highlights.PlayType} for more information as well as a list of defined play types.)<br>
-				For example, a play will satisfy {@code "Type: Dunk"} if it is a dunk.
+				For example, a play will satisfy {@code "Type: Dunk Made"} if it is a dunk.
 			</li>
 			<li>Time of game - Represented as a String, case-insensitive, formatted as {@code "Time: TIME_OF_GAME"}. A play satisfies this constraints if it is within
 				the specified time of game. Time of game can be specified in two ways: 
