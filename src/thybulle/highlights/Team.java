@@ -126,9 +126,7 @@ public class Team implements Constraint, Comparable<Team> {
 	}
 
 	/**Returns a team with name name.<br>
-	This method returns a canonical instance of a team. If a team with this name has not been created yet, it will be created and returned.<br>
-	If one has been created, a reference to the already created team is returned.<br>
-	This should be used as the "constructor" for Team.
+	This method should be used as the "constructor" for Team.
 	@param name the team's name.
 	@throws NullPointerException if name is null.
 	@return a canonical representation of a team.
@@ -146,6 +144,20 @@ public class Team implements Constraint, Comparable<Team> {
 		} else {
 			return t;
 		}
+	}
+
+	/**Parses a team from the given string.<br>
+	This method acts exactly the same as the getNBATeam method, except that it throws IllegalArgumentException if the team name oculd not be parsed.
+	@param constraint the String to parse.
+	@throws IllegalArgumetnException if the team name could not be parsed.
+	@return a Team matching the given String.
+	*/
+	public static Team parse(String constraint){
+		Team t = Team.getNBATeam(constraint);
+		if(t == null){
+			throw new IllegalArgumentException("Unknown team: " + constraint);
+		}
+		return t;
 	}
 
 	/**Returns this Team's name.

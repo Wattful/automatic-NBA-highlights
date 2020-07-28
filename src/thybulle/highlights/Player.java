@@ -44,10 +44,7 @@ public class Player implements Constraint, Comparable<Player> {
 	}
 
 	/**Returns a player with first name first and last name last. If a player only has one name (ex Nene), first should be null.<br>
-	This method returns a canonical instance of a player.<br>
-	If a player with this name has not been created yet, it will be created and returned.<br>
-	If one has been created, a reference to the already created player is returned.<br>
-	This should be used as the "constructor" for Player.
+	This method should be used as the "constructor" for Player.
 	@param first the player's first name.
 	@param last the player's last name. Cannot be null.
 	@throws NullPointerException if last is null.
@@ -66,6 +63,21 @@ public class Player implements Constraint, Comparable<Player> {
 			return answer;
 		} else {
 			return p;
+		}
+	}
+
+	/**Parses and returns a Player object from the given String.<br>
+	This method will treat everything up to the String's first space as the player's first name, and everything after as the player's last name.
+	@param constraint the String to parse.
+	@throws NullPointerException if constraint is nll
+	@return a Player object parsed from the given string.
+	*/
+	public static Player parse(String constraint){
+		String[] playerNames = constraint.split("\\s+", 2);
+		if(playerNames.length == 1){
+			return Player.get(null, playerNames[0]);
+		} else {
+			return Player.get(playerNames[0], playerNames[1]);
 		}
 	}
 

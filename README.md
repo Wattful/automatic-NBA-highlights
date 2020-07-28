@@ -15,7 +15,7 @@ Before running the program, you must do all of the following steps:
 2. Install FFMpeg and add it to the PATH
 3. Get required JAR files (explained in the Dependencies section below)
 4. Install browser driver (explained in config folder README)
-5. Specify settings in config files (explained in config folder README)
+5. Specify settings in config files, copy them to the correct path (explained in config folder README)
 
 # Dependencies
 The program has four dependencies:
@@ -64,7 +64,7 @@ The specification for this input file can be found in the README for the config 
 ## Config Files
 The program reads settings from several JSON config files.
 
-Default versions and specifications for these files can be found in the config folder.
+Default versions and specifications for these files can be found in the [config](/config) folder.
 
 **Look at these config files before running the program.** Some settings do not have a valid default value and must be set manually before the program can be run.
 
@@ -123,11 +123,11 @@ So if you want to watch highlights of Giannis, you'll have to sit through the hi
 
 The application design of the program makes it simple to develop new sources.
 
-In order to do this, one must write a class which implements the GameSource interface.
+In order to do this, one must write a class which implements the [thybulle.highlights.GameSource](src/thybulle/highlights/GameSource.java) interface.
 
-The highlights/AdvancedStats.java class is a blueprint as to how a Source is implemented. 
+The [thybulle.highlights.AdvancedStats](src/thybulle/highlights/AdvancedStats.java) class is a blueprint as to how a Source is implemented. 
 
 ## Data Storage
 Sources which collect data from the internet can drastically reduce their runtime by storing data on the user's local machine.
 
-NBA Advanced stats has the option to do this. A full season of play-by-play data takes up approximately 500 megabytes of data.
+NBA Advanced stats has the option to do this. A full season of play-by-play data takes up approximately 500 megabytes of storage.

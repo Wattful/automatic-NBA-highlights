@@ -7,141 +7,17 @@ import java.io.*;
 import java.time.*;
 import java.time.format.*;
 import java.util.regex.*;
+import java.lang.reflect.*;
 import thybulle.highlights.*;
 import thybulle.misc.*;
 
 /**Class containing static methods which parse input.<br>
 Input determines which games to use as an input dataset, as well as what constraints to apply to the dataset.<br>
-This class parses this input and returns it to the caller.<br>
-The finished product will include all plays in the dataset that satisfy the given constraints.<br>
-Input is formatted as a JSON object.<br>
-The JSON object should have four keys, each of which are mandatory:
-<ul>
-	<li>playsrc - Mandatory key. An integer representing which primary source to get play-by-play data from.
-		Currently there are is only one source:
-		<ul>
-			<li>0 - NBA Advanced Stats - Get play-by-play data from NBA Advanced stats.</li>
-		</ul>
-	</li>
-	<li>dataset - Mandatory key. An array of strings representing what set of games to get data from.<br>
-		Each string in the array corresponds to a group of games to include in the final dataset.
-		There are two ways to specify games: dates and seasons.
-		<ul>
-			<li>Dates - can be represented as either one date or two dates. <br>
-			One date includes all games from that day, while two dates includes all games from between those dates, inclusive.<br>
-			Dates are represented in MM/DD/YYYY format, with multiple dates separated by a dash.<br>
-			For example, if one wants to include games only on January 7, 2020, the String would be {@code "01/07/2020"}.<br>
-			If one wanted to include games from December 30, 2019 to January 6, 2020, the String would be {@code 12/30/2019-01/06/2020}.
-			</li>
-			<li>Seasons - includes all games in certain seasons.<br>
-				A season is represented as two years separated by a dash, followed by multiple letters specifying which parts of the season to include.<br>
-				The letters are as follows:
-				<ul>
-					<li>r - regular season</li>
-					<li>p - playoffs, not including the NBA finals</li>
-					<li>f - NBA finals</li>
-					<li>e - preseason</li>
-					<li>a - all-star game and the rising stars challenge
-						(Note that the only current source - stats.nba.com, does NOT have video for all star games).</li>
-				</ul>
-				The order and case of the letters do not matter.<br>
-				For example, {@code "2019-2020r"} Includes regular season games from the 2019-20 season.<br>
-				{@code "2016-2017pef"} includes playoff and preseason games from the 2016-17 season.<br>
-				If one wishes to include multiple consecutive seasons, they can put the first year as the first year of the starting season, 
-				and the second year as the last year of the final season.<br>
-				For example, {@code "2015-2019ra"} includes regular season and all-star games from the 2015-16 season to the 2018-19 season.
-			</li>
-		</ul>
-	</li>
-	<li>datasetteam - Mandatory key. An array of strings representing teams to limit the dataset to.<br>
-		Each string represents a team. If specified, the dataset will be limited to games played by the listed teams.<br>
-		Team names must be listed in full, case insensitive.<br>
-		For example, {@code ["Milwaukee Bucks"]} will limit the dataset to games played by the Milwaukee Bucks,
-		and {@code ["Philadelphia 76ers", "golden state warriors"]} will limit the dataset to games played by Philadelphia OR Golden State.<br>
-		If this key is not included, games from all teams will be included in the dataset.<br>
-		Note that for simplicity, all-star games are affected by this limit.
-	</li>
-	<li>constraints - Mandatory key. An array of constraints. Each constraint is represented as either a string or an object with a single key.<br>
-		All constraints specified must be satisfied by a play to be included in the final video.<br>
-		The constraints are as follows:
-		<ul>
-			<li>Player - Represented as a String, case-insensitive, formatted as {@code "Player: PLAYER_NAME"}. A play satisfies this constraint 
-				if it involves this player. <br>
-				For example, a play will satisfy {@code "Player: Giannis Antetokounmpo"} if it involves Giannis Antetokounmpo.
-			</li>
-			<li>Team - Represented as a String, case-insensitive, formatted as {@code "Team: TEAM_NAME"}. A play satisfies this constraint if it was committed by this team. 
-				The string must be a team's official, full name (See {@link thybulle.highlights.Team} for a list of NBA teams and their official, full names.)<br>
-				For example, a play will satisfy {@code "Team: Portland Trail Blazers"} if it was committed by the Portland Trail Blazers.
-			</li>
-			<li>Play type - Represented as a String, case-insensitive, formatted as {@code "Type: TYPE_NAME"}. A play satisfies this constraint if it is of this play type.
-				(See {@link thybulle.highlights.PlayType} for more information as well as a list of defined play types.)<br>
-				For example, a play will satisfy {@code "Type: Dunk Made"} if it is a dunk.
-			</li>
-			<li>Time of game - Represented as a String, case-insensitive, formatted as {@code "Time: TIME_OF_GAME"}. A play satisfies this constraints if it is within
-				the specified time of game. Time of game can be specified in two ways: 
-				<ul>
-					<li>Quarter - The play occurs within the specified quarter or overtime period. Acceptable strings for this format include {@code "1st"}, 
-						{@code "2nd"}, {@code "3rd"}, {@code "4th"}, {@code "ot"}, {@code "1ot"}, {@code "2ot"}, and so on.<br> 
-						For example, a play will satisfy {@code "Time: 1st"} if it occurred in the first quarter.
-						Note that "ot" specifies <i>any</i> overtime period, not just the first overtime. 
-						If one only wants to include the first overtime, they should use "1ot".
-					</li>
-					<li>Specific time - The play occurs between the specified times in the game. A time is represented as a number of minutes and a number of seconds,
-						followed by the quarter or overtime period. Note that the quarter name must be separated from the time by at least a space.
-						The two times are separated by a dash.<br>
-						For example, a play will satisfy {@code "Time: 03:00 4th-00:00 1ot"} if it occurs between three minutes left in the fourth and the end of  
-						first ovetime, inclusive.
-					</li>
-				</ul>
-			</li>
-			<li>Not constraint - Represented as an object with a single key, {@code "NOT"} (case insensitive), corresponding to a value of a single constraint.<br>
-				A play satisfies this constraint if it does not satisfy the constraint in the value.<br>
-				For example, a play will satisfy {@code {"Not" : "Type: "Three-Pointer"}} if it is not a three pointer.
-			</li>
-			<li>And constraint - Represented as an object with a single key, {@code "AND"} (case insensitive), corresponding to a value of an array of constraints.<br>
-				A play satisfies this constraint if it satisfies all of the constraints in the array.<br>
-				For example, a play will satisfy {@code {"AND" : ["Time: 3rd", "Team: Minnesota Timeberwolves"]}} if it occurred in the third quarter and was committed
-				by the Minnesota Timberwolves.
-			</li>
-			<li>
-				Or constraint - Represented as an object with a single key, {@code "OR"} (case insensitive), corresponding to a value of an array of constraints.<br>
-				A play satisfies this constraint if it satisfies any of the constraints in the array.<br>
-				For example, a play will satisfy {@code {"or" : ["Player: Lebron James", "Player: Anthony Davis"]}} if it was committed 
-				by either Lebron James or Anthony Davis.
-			</li>
-		</ul>
-		These constraints can be nested within each other.<br>
-		For an overall example, if the constraints key points to <br>
-		{@code 
-		["Player: James Harden", 
-		{"OR": 
-			["Type: Field Goal", 
-			"Type: Assist",
-			"Type: Rebound"
-			]
-		},
-		{"NOT" : 
-			{"AND":
-				["Time: ot",
-				"Type: Dunk"
-				]
-			}
-		}
-		]},<br>
-		The video will include all of James Harden's field goals, assists, and rebounds, except for his overtime dunks.
-	</li>
-</ul>
-<br>
+This class parses this input and returns it to the caller.
 */
-
-//TODO: Fill out season dates. 
 
 public class InputParsing {
 	private static final String separator = "\\s*\\-\\s*";
-
-	private static final String timestampPattern = "\\d{1,2}:\\d\\d\\s+\\d\\w\\w";
-	private static final String timeIntervalPattern = timestampPattern + separator + timestampPattern;
-
 	private static final String datePattern = "\\d\\d/\\d\\d/\\d\\d\\d\\d";
 	private static final String dateIntervalPattern = datePattern + separator + datePattern;
 	private static final String yearPattern = "\\d\\d\\d\\d";
@@ -203,6 +79,15 @@ public class InputParsing {
 		new Pair<LocalDate, LocalDate>(LocalDate.of(2019, 5, 30), LocalDate.of(2019, 6, 15)),
 		new Pair<LocalDate, LocalDate>(LocalDate.of(2020, 6, 4), LocalDate.of(2020, 6, 21))
 	);
+
+	private static final Map<String, Class<? extends Constraint>> includedConstraints = new HashMap<String, Class<? extends Constraint>>();
+	static{
+		includedConstraints.put("player", thybulle.highlights.Player.class);
+		includedConstraints.put("team", thybulle.highlights.Team.class);
+		includedConstraints.put("type", thybulle.highlights.PlayType.class);
+		includedConstraints.put("time", thybulle.highlights.TimeInterval.class);
+		//includedConstraints.put("score", thybulle.highlights.ScoreConstraint.class);
+	}
 	
 	private InputParsing(){}
 	
@@ -366,7 +251,7 @@ public class InputParsing {
 			if(!(o instanceof String)){
 				throw new JSONException("Non-string in Team array: " + o.toString());
 			}
-			teams.add(parseTeam((String)o));
+			teams.add(Team.parse((String)o));
 		}
 		return teams;
 	}
@@ -426,89 +311,59 @@ public class InputParsing {
 	}
 
 	//Parses a constraint from a string.
+	@SuppressWarnings("unchecked")
 	private static Constraint parseStringConstraint(String input){
 		String simplifiedInput = input.trim().toLowerCase();
-		String[] split = simplifiedInput.split("\\s+", 2);
-		if(split.length < 2){
-			throw new JSONException("Unknown constraint: " + input);
-		}
+		String[] split = simplifiedInput.split(":\\s+", 2);
 		String constraintType = split[0];
-		String constraint = split[1];
-		if(constraintType.equals("player:")){
-			return parsePlayer(constraint);
-		} else if(constraintType.equals("team:")){
-			return parseTeam(constraint);
-		} else if(constraintType.equals("type:")){
-			return parsePlayType(constraint);
-		} else if(constraintType.equals("time:")){
-			return parseTimeInterval(constraint);
-		} else {
-			throw new JSONException("Unknown constraint type: " + constraintType);
-		}
-	}
-
-	//Parses a player from the given string.
-	private static Player parsePlayer(String constraint){
-		String[] playerNames = constraint.split("\\s+", 2);
-		if(playerNames.length == 1){
-			return Player.get(null, playerNames[0]);
-		} else {
-			return Player.get(playerNames[0], playerNames[1]);
-		}
-	}
-
-	//Parses a team from the given string.
-	private static Team parseTeam(String constraint){
-		Team t = Team.getNBATeam(constraint.trim().toLowerCase());
-		if(t == null){
-			throw new JSONException("Unknown team: " + constraint);
-		}
-		return t;
-	}
-
-	//Parses a play type from the given string.
-	private static PlayType parsePlayType(String constraint){
-		PlayType p = PlayType.parse(constraint);
-		if(p == null){
-			throw new JSONException("Unknown play type: " + constraint);
-		}
-		return p;
-	}
-
-	//Parses a time interval from the given string.
-	private static TimeInterval parseTimeInterval(String constraint){
-		if(constraint.equals("ot")){
-			//An assumption is made that there will be no overtime past the 11th overtime.
-			return new TimeInterval(new Timestamp(5, 300), new Timestamp(15, 0));
-		} else if(Pattern.matches(timeIntervalPattern, constraint)){
-			String[] patternSplit = constraint.split(separator);
-			String firstTimestamp = patternSplit[0];
-			String secondTimestamp = patternSplit[1];
-			return new TimeInterval(parseTimestamp(firstTimestamp), parseTimestamp(secondTimestamp));
-		} else {
-			int quarter;
-			try {
-				quarter = Timestamp.parseQuarter(constraint);
-			} catch(IllegalArgumentException e) {
-				throw new JSONException("Malformed quarter: " + constraint, e);
-			}
-			
-			if(quarter > 4){
-				return new TimeInterval(new Timestamp(quarter, 300), new Timestamp(quarter, 0));
-			} else if(quarter > 0){
-				return new TimeInterval(new Timestamp(quarter, 720), new Timestamp(quarter, 0));
-			} else {
-				throw new JSONException("Could not parse timestamp: " + constraint);
+		String constraintInput = split.length < 2 ? null : split[1];
+		Class<? extends Constraint> argumentClass = includedConstraints.get(constraintType);
+		if(argumentClass == null){
+			try{
+				argumentClass = (Class<? extends Constraint>)Class.forName(constraintType);
+			} catch(ClassNotFoundException e){
+				throw new JSONException(e);
+			} catch(ClassCastException e){
+				throw new JSONException(argumentClass.toString() + " does not implement thybulle.highlights.Constraint.", e);
 			}
 		}
-	}
-
-	//Parses a timestamp from a string.
-	private static Timestamp parseTimestamp(String constraint){
+		if(argumentClass.isInterface()){
+			throw new JSONException(argumentClass.toString() + " is an interface.");
+		} else if(Modifier.isAbstract(argumentClass.getModifiers())){
+			throw new JSONException(argumentClass.toString() + " is an abstract class.");
+		}
+		Constructor<? extends Constraint> validConstructor;
+		Method parseMethod;
 		try{
-			return Timestamp.parse(constraint);
+			validConstructor = argumentClass.getConstructor(String.class);
+		} catch(NoSuchMethodException e){
+			validConstructor = null;
+		}
+		try{
+			parseMethod = argumentClass.getMethod("parse", String.class);
+			if(!Constraint.class.isAssignableFrom(parseMethod.getReturnType())){
+				throw new NoSuchMethodException();
+			}
+		} catch(NoSuchMethodException e){
+			parseMethod = null;
+		}
+
+		try{
+			if(parseMethod != null){
+				Constraint c  = (Constraint)parseMethod.invoke(null, constraintInput);
+				if(c == null){
+					throw new JSONException(argumentClass.toString() + " parse method returned null for input " + constraintInput);
+				}
+				return c;
+			} else if(validConstructor != null){
+				return validConstructor.newInstance(constraintInput);
+			} else {
+				throw new JSONException(argumentClass.toString() + " did not define a constructor or parse method with a single String parameter.");
+			}
+		} catch(ReflectiveOperationException e){
+			throw new JSONException(e);
 		} catch(IllegalArgumentException e){
-			throw new JSONException("Malformed timestamp : " + constraint, e);
+			throw new JSONException(input + " could not be parsed.", e);
 		}
 	}
 }

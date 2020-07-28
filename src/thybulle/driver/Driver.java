@@ -9,9 +9,9 @@ import java.time.LocalDate;
 import thybulle.highlights.*;
 import thybulle.misc.*;
 
-//TODO: Improve readme
-//To test: Browser
-//Refactoring: unify varargs/lists, include Player parse method, include utility methods in TimeInterval, Figure out how to parse broken games, change browser name to enum
+//Refactoring: unify varargs/lists, Figure out how to parse broken games, change browser name to enum
+
+//TODO: Figure out custom constraint without input, write Score, ScoreConstraint classes, modify AdvancedStats to record score, test new features, remove rep checking functions
 
 public class Driver {
 	static final Logging logging = new Logging(System.out);
@@ -38,7 +38,7 @@ public class Driver {
 					logging.info("Cleaning up resources");
 					try{
 						synchronized(source){
-							source.exit();
+							source.close();
 							System.exit(0);
 						}
 					} catch(IOException e){
@@ -63,12 +63,12 @@ public class Driver {
 		logging.info("Found " + h.size() + (h.size() == 1 ? " play." : " plays."));
 		if(h.size() == 0){
 			logging.error("No plays were found. Exiting.");
-			source.exit();
+			source.close();
 			System.exit(0);
 		}
 		h.saveVideo(outputFile, logging);
 		logging.info("Cleaning up resources.");
-		source.exit();
+		source.close();
 		logging.info("Done!");
 		System.exit(0);
 	}

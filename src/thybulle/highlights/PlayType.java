@@ -96,14 +96,11 @@ public enum PlayType implements Constraint {
 	Other than case and underscores/spaces, the input string must match a PlayType constant exactly to be returned.
 	@param input The String to parse.
 	@throws NullPointerException if input is null.
-	@return the PlayType corresponding to this String, or null if no such PlayType exists.
+	@throws IllegalArgumentExcpetion if no PlayType matched the given String.
+	@return the PlayType corresponding to this String.
 	*/
 	public static PlayType parse(String input){
-		try {
-			return PlayType.valueOf(input.toUpperCase().replace(" ", "_"));
-		} catch(IllegalArgumentException e){
-			return null;
-		}
+		return PlayType.valueOf(input.toUpperCase().replace(" ", "_"));
 	}
 
 	@Override

@@ -17,6 +17,7 @@ public abstract class Play {
 	private final List<Player> p;
 	private final Timestamp t;
 	private final Team te;
+	private final Score s;
 
 	//RI: No fields (except video) are null, p.length == pt.getNumberOfPlayers()
 	//AF: Represents a play. The play was made by player p, is of type pt, at time t, and calling getVideo returns a video of the play.
@@ -25,17 +26,18 @@ public abstract class Play {
 	/**Constructs a Play with the specified fields.
 	@throws NullPointerException if any arguments are null.
 	*/
-	protected Play(PlayType playType, Timestamp timestamp, Team team, Player... player){
-		if(playType == null || player == null || timestamp == null || team == null){
+	protected Play(PlayType playType, Timestamp timestamp, Team team, Score score, Player... player){
+		if(playType == null || player == null || timestamp == null || team == null || score == null){
 			throw new NullPointerException("A field was null.");
 		}
 		if(player.length != playType.getNumberOfPlayers()){
 			throw new IllegalArgumentException("Number of players did not match the number required for the play type.");
 		}
-		pt = playType;
-		p = List.of(player);
-		t = timestamp;
-		te = team;
+		this.pt = playType;
+		this.p = List.of(player);
+		this.t = timestamp;
+		this.te = team;
+		this.s = score;
 		checkRep();
 	}
 
@@ -61,28 +63,35 @@ public abstract class Play {
 	@return the type of this play.
 	*/
 	public PlayType getType(){
-		return pt;
+		return this.pt;
 	}
 
 	/**Returns the players that are associated with this play.
 	@return the players that are associated with this play.
 	*/
 	public List<Player> getPlayers(){
-		return p;
+		return this.p;
 	}
 
 	/**Returns the time that this play occured at.
 	@return the time that this play occured at.
 	*/
 	public Timestamp getTimestamp(){
-		return t;
+		return this.t;
 	}
 
 	/**Returns the team that committed this play.
 	@return the team that committed this play.
 	*/
 	public Team getTeam(){
-		return te;
+		return this.te;
+	}
+
+	/**Returns the current score at the time of this play.
+	@return the current score at the time of this play.
+	*/
+	public Score getScore(){
+		return this.s;
 	}
 
 	@Override
@@ -90,7 +99,7 @@ public abstract class Play {
 	@return a hash code for this Play.
 	*/
 	public int hashCode(){
-		return pt.hashCode() + p.hashCode() + t.hashCode() + te.hashCode();
+		return this.pt.hashCode() + this.p.hashCode() + this.t.hashCode() + this.te.hashCode();
 	}
 
 	@Override
@@ -119,6 +128,6 @@ public abstract class Play {
 	@return a String representation of this Play.
 	*/
 	public String toString(){
-		return pt.toString() + " by " + (p.size() > 0 ? (p.toString() + " of ") : "") + te.toString() + " at " + t.toString();
+		return this.pt.toString() + " by " + (this.p.size() > 0 ? (this.p.toString() + " of ") : "") + this.te.toString() + " at " + this.t.toString();
 	}
 }

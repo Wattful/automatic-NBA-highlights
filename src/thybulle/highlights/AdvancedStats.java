@@ -25,11 +25,11 @@ import org.json.*;
 
 /**Class which parses play-by-play data from stats.nba.com.<br>
 stats.nba.com is an excellent source for play-by-play data.<br>
-It includes pre-edited videos of almost all plays, with the notable exception of many dead-ball turnovers.<br>
+It includes pre-edited videos of almost all plays, with the notable exception of most dead-ball turnovers.<br>
 Its only major weakness is that it is impossible to tell the difference between players on the same team with the same last name.<br>
 Any plays committed by either player are attributed to the one which shows up first in the box score.<br>
 This source has the ability to save its data locally on the user's machine.<br>
-Doing so will reduce the overall runtime of the program from up to several hours down to a few minutes.<br>
+Doing so may reduce the overall runtime of the program from up to several hours down to a few minutes.<br>
 The options to read and write data can be specified in the JSON file "./advancedstatsconfig.json".
 */
 
@@ -275,7 +275,7 @@ public class AdvancedStats implements GameSource {
 	}
 
 	private void reset() throws IOException {
-		this.exit();
+		this.close();
 		this.setup();
 	}
 
@@ -326,6 +326,26 @@ public class AdvancedStats implements GameSource {
 		logging.info("Getting play-by-play data");
 		String playByPlayLink = url + "/playbyplay";
 		Element playByPlayBody = renderPage(playByPlayLink, DEFAULT_TIMEOUT, MINIMUM_TIMEOUT, ExpectedConditions.visibilityOfElementLocated(By.className("boxscore-pbp__inner"))).body();
+		Element table = getTable(playByPlayBody);
+		//Yes, this is disgusting. Yes, it is necessary.
+		//Each pair represents all plays committed by each team at a certain time.
+		//The first value is the away team's plays, the second value is the home team's plays.
+		//This is used to classify plays which involve both teams - for example, an and one is a field goal by one team combined with a shooting foul by the other.
+		SortedMap<Timestamp, Pair<List<UnparsedPlay>, List<UnparsedPlay>>> rawPlays = getRawPlays(table);
+		
+		logging.info("Parsing play-by-play data");
+		List<AdvancedStatsPlay> plays = parseAllPlays(rawPlays, awayPlayers, homePlayers, gi.awayTeam(), gi.homeTeam());
+		
+		logging.info("Finished. Found " + plays.size() + (plays.size() == 1 ? "play." : " plays."));
+		Game result = new Game(gi, plays);
+		interning.put(gi, result);
+		if(this.write){
+			this.data.put(gi.toString(), playsToJSONArray(plays));
+		}
+		return result;
+	}
+
+	private Element getTable(Element playByPlayBody){
 		Elements test = playByPlayBody.getElementsByClass("boxscore-pbp__inner");
 		if(test.isEmpty()) {
 			throw new AdvancedStatsControlFlowException("Could not get play-by-play");
@@ -334,11 +354,10 @@ public class AdvancedStats implements GameSource {
 		if(test2.isEmpty()) {
 			throw new AdvancedStatsControlFlowException("Could not get play-by-play");
 		}
-		Element table = test2.get(0);
-		//Yes, this is disgusting. Yes, it is necessary.
-		//Each pair represents all plays committed by each team at a certain time.
-		//The first value is the away team's plays, the second value is the home team's plays.
-		//This is used to classify plays which involve both teams - for example, an and one is a field goal by one team combined with a shooting foul by the other.
+		return test2.get(0);
+	}
+
+	private SortedMap<Timestamp, Pair<List<UnparsedPlay>, List<UnparsedPlay>>> getRawPlays(Element table){
 		SortedMap<Timestamp, Pair<List<UnparsedPlay>, List<UnparsedPlay>>> rawPlays = new TreeMap<Timestamp, Pair<List<UnparsedPlay>, List<UnparsedPlay>>>();
 		int currentQuarter = 0;
 		for(Element e = table.child(0); e != null; e = e.nextElementSibling()){
@@ -368,28 +387,19 @@ public class AdvancedStats implements GameSource {
 			}
 			rawPlays.put(timestamp, playsAtTime);
 		}
+		return rawPlays;
+	}
 
-		logging.info("Parsing play-by-play data");
-		List<AdvancedStatsPlay> plays = new LinkedList<AdvancedStatsPlay>();
-		for(Timestamp t : rawPlays.keySet()){
-			Pair<List<UnparsedPlay>, List<UnparsedPlay>> unparsedPlayGroup = rawPlays.get(t);
-			
-			Collection<AdvancedStatsPlay> pls = parsePlays(unparsedPlayGroup, awayPlayers, homePlayers, gi.awayTeam(), t);
-			Collection<AdvancedStatsPlay> plsr = parsePlays(unparsedPlayGroup.reversePair(), homePlayers, awayPlayers, gi.homeTeam(), t);
-			/*if(pls.size() + plsr.size() < unparsedPlayGroup.first().size() + unparsedPlayGroup.second().size()){
-				logging.warning("Match not found for a play in: " + unparsedPlayGroup);
-			}*/
-			
-			plays.addAll(pls);
-			plays.addAll(plsr);
+	private Score addToScore(PlayType pt, Score score){
+		if(pt.hasSupertype(PlayType.THREE_POINTER_MADE)){
+			return score.addToThisTeamsPoints(3);
+		} else if(pt.hasSupertype(PlayType.FIELD_GOAL_MADE)){
+			return score.addToThisTeamsPoints(2);
+		} else if(pt.hasSupertype(PlayType.FREE_THROW_MADE)){
+			return score.addToThisTeamsPoints(2);
+		} else {
+			return score;
 		}
-		logging.info("Finished. Found " + plays.size() + (plays.size() == 1 ? "play." : " plays."));
-		Game result = new Game(gi, plays);
-		interning.put(gi, result);
-		if(this.write){
-			this.data.put(gi.toString(), playsToJSONArray(plays));
-		}
-		return result;
 	}
 
 	private List<AdvancedStatsPlay> JSONArrayToPlays(JSONArray input){
@@ -442,9 +452,35 @@ public class AdvancedStats implements GameSource {
 		return playLink;
 	}
 
+	private List<AdvancedStatsPlay> parseAllPlays(SortedMap<Timestamp, Pair<List<UnparsedPlay>, List<UnparsedPlay>>> rawPlays,
+		Collection<? extends Player> awayPlayers, Collection<? extends Player> homePlayers, Team awayTeam, Team homeTeam){
+		List<AdvancedStatsPlay> plays = new LinkedList<AdvancedStatsPlay>();
+		Score score = new Score(0, 0);
+		for(Timestamp t : rawPlays.keySet()){
+			Pair<List<UnparsedPlay>, List<UnparsedPlay>> unparsedPlayGroup = rawPlays.get(t);
+			
+			Collection<AdvancedStatsPlay> pls = parsePlays(unparsedPlayGroup, awayPlayers, homePlayers, awayTeam, t, score);
+			Collection<AdvancedStatsPlay> plsr = parsePlays(unparsedPlayGroup.reversePair(), homePlayers, awayPlayers, homeTeam, t, score.reverseScore());
+			/*if(pls.size() + plsr.size() < unparsedPlayGroup.first().size() + unparsedPlayGroup.second().size()){
+				logging.warning("Match not found for a play in: " + unparsedPlayGroup);
+			}*/
+
+			for(AdvancedStatsPlay p : pls){
+				score = addToScore(p.getType(), score);
+			}
+			for(AdvancedStatsPlay p : plsr){
+				score = addToScore(p.getType(), score.reverseScore()).reverseScore();
+			}
+			
+			plays.addAll(pls);
+			plays.addAll(plsr);
+		}
+		return plays;
+	}
+
 	//Parses all plays contained in unparsedPlayGroup
 	private Collection<AdvancedStatsPlay> parsePlays(Pair<List<UnparsedPlay>, List<UnparsedPlay>> unparsedPlayGroup, 
-				Collection<? extends Player> firstPlayers, Collection<? extends Player> secondPlayers, Team team, Timestamp timestamp){
+				Collection<? extends Player> firstPlayers, Collection<? extends Player> secondPlayers, Team team, Timestamp timestamp, Score score){
 		
 		Collection<AdvancedStatsPlay> newPlays = new LinkedList<AdvancedStatsPlay>();
 		for(int i = 0; i < unparsedPlayGroup.first().size(); i++){
@@ -482,7 +518,7 @@ public class AdvancedStats implements GameSource {
 					players[j] = guessPlayer(playerLastNames.get(j), firstPlayers, secondPlayers);
 				}
 				
-				AdvancedStatsPlay asp = new AdvancedStatsPlay(this, unparsedPlayGroup.first().get(i).playLink, playType, timestamp, team, players);
+				AdvancedStatsPlay asp = new AdvancedStatsPlay(this, unparsedPlayGroup.first().get(i).playLink, playType, timestamp, team, score, players);
 				newPlays.add(asp);
 				newPlaysForThisUnparsedPlay.add(asp);
 			}
@@ -645,7 +681,7 @@ public class AdvancedStats implements GameSource {
 	 * Once this method is called, no other AdvancedStats methods can be called.
 	 @throws IOException if an IO error occurs.
 	 */
-	public void exit() throws IOException {
+	public void close() throws IOException {
 		this.flush();
 		if(this.driver != null){
 			try{
@@ -691,8 +727,8 @@ public class AdvancedStats implements GameSource {
 		private Video v;
 		private String videoLink;
 
-		private AdvancedStatsPlay(AdvancedStats stats, String link, PlayType playType, Timestamp timestamp, Team team, Player... player){
-			super(playType, timestamp, team, player);
+		private AdvancedStatsPlay(AdvancedStats stats, String link, PlayType playType, Timestamp timestamp, Team team, Score score, Player... player){
+			super(playType, timestamp, team, score, player);
 			this.source = stats;
 			this.playLink = link;
 			this.videoLink = videoLink;
@@ -751,6 +787,7 @@ public class AdvancedStats implements GameSource {
 			answer.put("type", this.getType().toString());
 			answer.put("time", this.getTimestamp().toString());
 			answer.put("team", this.getTeam().toString());
+			answer.put("score", this.getScore().toString());
 			JSONArray players = new JSONArray();
 			for(Player p : this.getPlayers()){
 				players.put(p.toString());
@@ -764,13 +801,13 @@ public class AdvancedStats implements GameSource {
 			PlayType type = PlayType.parse(input.getString("type"));
 			Timestamp timestamp = Timestamp.parse(input.getString("time"));
 			Team team = Team.get(input.getString("team"));
+			Score score = Score.parse(input.getString("score"));
 			JSONArray arr = input.getJSONArray("players");
 			Player[] players = new Player[arr.length()];
 			for(int i = 0; i < arr.length(); i++){
-				String pl = arr.getString(i);
-				players[i] = Player.get(pl.indexOf(" ") != -1 ? pl.substring(0, pl.indexOf(" ")) : null, pl.substring(pl.indexOf(" ") + 1));
+				players[i] = Player.parse(arr.getString(i));
 			}
-			return new AdvancedStatsPlay(stats, playLink, type, timestamp, team, players);
+			return new AdvancedStatsPlay(stats, playLink, type, timestamp, team, score, players);
 		}
 	}
 
@@ -784,11 +821,13 @@ public class AdvancedStats implements GameSource {
 			playLink = v;
 		}
 		
+		@Override
 		public String toString() {
 			return rawPlay;
 		}
 	}
 
+	//Exception used to control flow in AdvancedStats methods.
 	private static class AdvancedStatsControlFlowException extends RuntimeException {
 		private AdvancedStatsControlFlowException(){
 			super();

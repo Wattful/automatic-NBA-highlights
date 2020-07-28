@@ -1,5 +1,6 @@
 package thybulle.highlights;
 
+import java.util.regex.Pattern;
 import java.util.*;
 import thybulle.misc.*;
 
@@ -11,6 +12,9 @@ import thybulle.misc.*;
 
 public class TimeInterval implements Constraint {
 	private static final boolean CHECK_REP = true;
+	private static final String separator = "\\s*\\-\\s*";
+	private static final String timestampPattern = "\\d{1,2}:\\d\\d\\s+\\d\\w\\w";
+	private static final String timeIntervalPattern = timestampPattern + separator + timestampPattern;
 
 	private final Timestamp beginning;
 	private final Timestamp end;
@@ -78,6 +82,48 @@ public class TimeInterval implements Constraint {
 	*/
 	public boolean satisfiedBy(Play p){
 		return this.contains(p.getTimestamp());
+	}
+
+	/**Parses a TimeInterval from a String. The specification for the input can be found in the config README file under the time constraint.
+	@param constraint The String to parse
+	@throws NullPointerException if constraint is null
+	@throws IllegalArgumentException if the given String could not be parsed
+	@return the parsed TimeInterval.
+	*/
+	public static TimeInterval parse(String constraint){
+		if(constraint.equals("ot")){
+			//An assumption is made that there will be no overtime past the 11th overtime.
+			return new TimeInterval(new Timestamp(5, 300), new Timestamp(15, 0));
+		} else if(Pattern.matches(timeIntervalPattern, constraint)){
+			String[] patternSplit = constraint.split(separator);
+			String firstTimestamp = patternSplit[0];
+			String secondTimestamp = patternSplit[1];
+			return new TimeInterval(parseTimestamp(firstTimestamp), parseTimestamp(secondTimestamp));
+		} else {
+			int quarter;
+			try {
+				quarter = Timestamp.parseQuarter(constraint);
+			} catch(IllegalArgumentException e) {
+				throw new IllegalArgumentException("Malformed quarter: " + constraint, e);
+			}
+			
+			if(quarter > 4){
+				return new TimeInterval(new Timestamp(quarter, 300), new Timestamp(quarter, 0));
+			} else if(quarter > 0){
+				return new TimeInterval(new Timestamp(quarter, 720), new Timestamp(quarter, 0));
+			} else {
+				throw new IllegalArgumentException("Could not parse timestamp: " + constraint);
+			}
+		}
+	}
+
+	//Parses a timestamp from a string.
+	private static Timestamp parseTimestamp(String constraint){
+		try{
+			return Timestamp.parse(constraint);
+		} catch(IllegalArgumentException e){
+			throw new IllegalArgumentException("Malformed timestamp : " + constraint, e);
+		}
 	}
 
 	@Override

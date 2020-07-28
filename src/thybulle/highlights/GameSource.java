@@ -12,7 +12,7 @@ and it must be able to return play-by-play data for a game given a GameInfo obje
 Additionally, several default methods which call getGameInformationOnDay and getGame in various ways are included.
 */
 
-public interface GameSource {
+public interface GameSource extends Closeable{
 	/**Returns a list of GameInfos representing all NBA games played on the given date.
 	@param date The date to get GameInfos for.
 	@throws NullPointerExcpetion if date is null.
@@ -31,8 +31,9 @@ public interface GameSource {
 	
 	/**Closes all resources associated with this GameSource.<br>
 	 * Once this method is called on an instance of GameSource, other method calls may or may not function correctly.
+	 @throws IOException if an IO error occurs.
 	 */
-	void exit() throws IOException;
+	void close() throws IOException;
 
 	/**Returns a list of games corresponding to the provided GameInfos.<br>
 	The order of the list corresponds to the iteration order of the provided Collection.
