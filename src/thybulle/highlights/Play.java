@@ -99,7 +99,7 @@ public abstract class Play {
 	@return a hash code for this Play.
 	*/
 	public int hashCode(){
-		return this.pt.hashCode() + this.p.hashCode() + this.t.hashCode() + this.te.hashCode();
+		return this.pt.hashCode() + this.p.hashCode() + this.t.hashCode() + this.te.hashCode() + this.s.hashCode();
 	}
 
 	@Override
@@ -120,7 +120,7 @@ public abstract class Play {
 			return false;
 		}
 		Play pl = (Play)o;
-		return this.pt.equals(pl.pt) && this.p.equals(pl.p) && this.t.equals(pl.t) && this.te.equals(pl.te);
+		return this.pt.equals(pl.pt) && this.p.equals(pl.p) && this.t.equals(pl.t) && this.te.equals(pl.te) && this.s.equals(pl.s);
 	}
 
 	@Override

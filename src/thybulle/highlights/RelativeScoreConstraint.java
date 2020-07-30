@@ -36,7 +36,7 @@ public class RelativeScoreConstraint implements Constraint {
 		this.secondLimit = otherLimit;
 	}
 
-	/**Returns this RelativeScoreConstraint's lower limit.
+	/**Returns this RelativeScoreConstraint's lower limit. Will return Integer.MAX_VALUE for lower-bounded constraints.
 	@return this RelativeScoreConstraint's lower limit.
 	*/
 	public int getLowerLimit(){
@@ -44,7 +44,7 @@ public class RelativeScoreConstraint implements Constraint {
 	}
 
 
-	/**Returns this RelativeScoreConstraint's upper limit.
+	/**Returns this RelativeScoreConstraint's upper limit. Will return Integer.MIN_VALUE for lower-bounded constraints.
 	@return this RelativeScoreConstraint's upper limit.
 	*/
 	public int getUpperLimit(){
@@ -70,7 +70,7 @@ public class RelativeScoreConstraint implements Constraint {
 	@return a RelativeScoreConstraint parsed from the given String.
 	*/
 	public static RelativeScoreConstraint parse(String constraint){
-		String[] split = constraint.split(SEPARATOR);
+		String[] split = constraint.split(SEPARATOR, 2);
 		if(split.length < 2){
 			if(split[0].charAt(split[0].length() - 1) == '-'){
 				String inTigers = split[0].substring(0, split[0].length() - 1);
@@ -110,25 +110,24 @@ public class RelativeScoreConstraint implements Constraint {
 			return false;
 		}
 		RelativeScoreConstraint rcs = (RelativeScoreConstraint)o;
-		return this.firstLimit == rcs.firstLimit && this.secondLimit == rcs.secondLimit;
+		return (this.firstLimit == rcs.firstLimit && this.secondLimit == rcs.secondLimit) || (this.firstLimit == rcs.secondLimit && this.secondLimit == rcs.firstLimit);
 	}
 
 	@Override
 	/**Returns a String representation of this RelativeScoreConstraint.
+	This toString method is compatible with this class' parse method.
+	In other words, for any Score s, s.equals(Score.parse(s.toString())) will be true.
 	@return a String representation of this RelativeScoreConstraint.
 	*/
 	public String toString(){
-		String baseString = "RelativeScoreConstraint: ";
-		String endString;
 		if(firstLimit == secondLimit){
-			endString = "" + firstLimit;
+			return "" + firstLimit;
 		} else if(secondLimit == Integer.MAX_VALUE){
-			endString = firstLimit + "+";
+			return firstLimit + "+";
 		} else if(secondLimit == Integer.MIN_VALUE){
-			endString = firstLimit + "-";
+			return firstLimit + "-";
 		} else {
-			endString = firstLimit + "~" + secondLimit;
+			return firstLimit + "~" + secondLimit;
 		}
-		return baseString + endString;
 	}
 }

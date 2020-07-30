@@ -215,7 +215,7 @@ public class AdvancedStats implements GameSource {
 		return new Pair<F, S>(first, second);
 	}
 
-	private AdvancedStats(boolean read, boolean write, String readPath, String writePath) {
+	private AdvancedStats(boolean read, boolean write, String readPath, String writePath) throws IOException {
 		this.read = read;
 		this.write = write;
 		this.writeLocation = writePath;
@@ -227,10 +227,8 @@ public class AdvancedStats implements GameSource {
 			} else {
 				try{
 					this.data =  new JSONObject(Files.readString(Path.of(readPath)));
-				} catch(IOException | JSONException e){
-					logging.error("Advanced stats data file at "  + readPath + " was improperly formatted. Running without pre-read data.");
-					logging.error(e.getMessage());
-					this.data = new JSONObject();
+				} catch(JSONException e){
+					throw new IOException(e);
 				}
 			}
 		} else {
@@ -244,7 +242,7 @@ public class AdvancedStats implements GameSource {
 	@throws IOException if an IO error occurs.
 	@return an AdvancedStats instance.
 	*/
-	public static AdvancedStats open(boolean read, boolean write) {
+	public static AdvancedStats open(boolean read, boolean write) throws IOException {
 		return new AdvancedStats(read, write, DEFAULT_DATA_LOCATION, DEFAULT_DATA_LOCATION);
 	}
 
@@ -256,7 +254,7 @@ public class AdvancedStats implements GameSource {
 	@throws IOException if an IO error occurs.
 	@return an AdvancedStats instance.
 	*/
-	public static AdvancedStats open(boolean read, boolean write, String readLocation, String writeLocation) {
+	public static AdvancedStats open(boolean read, boolean write, String readLocation, String writeLocation) throws IOException {
 		return new AdvancedStats(read, write, readLocation, writeLocation);
 	}
 
@@ -396,7 +394,7 @@ public class AdvancedStats implements GameSource {
 		} else if(pt.hasSupertype(PlayType.FIELD_GOAL_MADE)){
 			return score.addToThisTeamsPoints(2);
 		} else if(pt.hasSupertype(PlayType.FREE_THROW_MADE)){
-			return score.addToThisTeamsPoints(2);
+			return score.addToThisTeamsPoints(1);
 		} else {
 			return score;
 		}

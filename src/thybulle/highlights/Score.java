@@ -52,6 +52,7 @@ public class Score {
 	}
 
 	/**Returns a Score with the given value added to this team's point value.
+	@throws IllegalArgumentException if the value would result in a team having negative points.
 	@return a Score with the given value added to this team's point value.
 	*/
 	public Score addToThisTeamsPoints(int points){
@@ -59,6 +60,7 @@ public class Score {
 	}
 
 	/**Returns a Score with the given value added to the other team's point value.
+	@throws IllegalArgumentException if the value would result in a team having negative points.
 	@return a Score with the given value added to the other team's point value.
 	*/
 	public Score addToOtherTeamsPoints(int points){
@@ -67,7 +69,6 @@ public class Score {
 
 	/**Parses and returns a Score from the given String.<br>
 	The String must consist of two integers separated by "to", with any amount of whitespace before and after the separator.<br>
-	Note that for any Score s, s.equals(Score.parse(s.toString())) will return true.
 	@param input the String input
 	@throws NullPointerException if input is null.
 	@throws IllegalArgumentException if the input could not be parsed.
@@ -113,7 +114,9 @@ public class Score {
 	}
 
 	@Override
-	/**Returns a String representing this Score object.
+	/**Returns a String representing this Score object.<br>
+	This toString method is compatible with this class' parse method.
+	In other words, for any Score s, s.equals(Score.parse(s.toString())) will be true.
 	@return a String representing this Score object.
 	*/
 	public String toString(){

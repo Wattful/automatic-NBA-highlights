@@ -86,7 +86,7 @@ public class InputParsing {
 		includedConstraints.put("team", thybulle.highlights.Team.class);
 		includedConstraints.put("type", thybulle.highlights.PlayType.class);
 		includedConstraints.put("time", thybulle.highlights.TimeInterval.class);
-		//includedConstraints.put("score", thybulle.highlights.ScoreConstraint.class);
+		includedConstraints.put("score", thybulle.highlights.RelativeScoreConstraint.class);
 	}
 	
 	private InputParsing(){}
@@ -251,7 +251,11 @@ public class InputParsing {
 			if(!(o instanceof String)){
 				throw new JSONException("Non-string in Team array: " + o.toString());
 			}
-			teams.add(Team.parse((String)o));
+			try {
+				teams.add(Team.parse((String)o));
+			} catch(IllegalArgumentException e) {
+				throw new JSONException(e);
+			}
 		}
 		return teams;
 	}
@@ -313,11 +317,11 @@ public class InputParsing {
 	//Parses a constraint from a string.
 	@SuppressWarnings("unchecked")
 	private static Constraint parseStringConstraint(String input){
-		String simplifiedInput = input.trim().toLowerCase();
+		String simplifiedInput = input.trim();
 		String[] split = simplifiedInput.split(":\\s+", 2);
 		String constraintType = split[0];
-		String constraintInput = split.length < 2 ? null : split[1];
-		Class<? extends Constraint> argumentClass = includedConstraints.get(constraintType);
+		String constraintInput = split.length < 2 ? null : split[1].toLowerCase();
+		Class<? extends Constraint> argumentClass = includedConstraints.get(constraintType.toLowerCase());
 		if(argumentClass == null){
 			try{
 				argumentClass = (Class<? extends Constraint>)Class.forName(constraintType);
@@ -331,6 +335,8 @@ public class InputParsing {
 			throw new JSONException(argumentClass.toString() + " is an interface.");
 		} else if(Modifier.isAbstract(argumentClass.getModifiers())){
 			throw new JSONException(argumentClass.toString() + " is an abstract class.");
+		} else if(!Constraint.class.isAssignableFrom(argumentClass)) {
+			throw new JSONException(argumentClass.toString() + " does not implement thybulle.highlights.Constraint.");
 		}
 		Constructor<? extends Constraint> validConstructor;
 		Method parseMethod;
