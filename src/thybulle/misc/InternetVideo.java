@@ -21,7 +21,6 @@ public class InternetVideo implements Video {
 			throw new NullPointerException();
 		}
 		this.internetLocation = location;
-		checkRep();
 	}
 
 	/**Constructs an InternetVideo pointing to the path in the given String.

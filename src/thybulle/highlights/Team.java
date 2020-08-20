@@ -87,7 +87,6 @@ public class Team implements Constraint, Comparable<Team> {
 	//Constructs a team with name name.
 	private Team(String name){
 		teamName = name;
-		checkRep();
 	}
 
 	/**Returns the NBA team with the given name, or null if no such team exists.<br>
