@@ -10,14 +10,9 @@ Stores the date that a game occurred on, as well as the game's home and away tea
 */
 
 public class GameInfo implements Comparable<GameInfo> {
-	private static final boolean CHECK_REP = true;
-
 	private final LocalDate date;
 	private final Team away;
 	private final Team home;
-
-	//RI: No fields are null, !away.equals(home).
-	//AF: Represents a game data "skeleton" - all data necessary to identify a game. date is the game's date and time, away is the away team, home is the home team.
 
 	/**Constructs a GameInfo with the given infomration.
 	 * @param time The date the games was played on.
@@ -36,20 +31,6 @@ public class GameInfo implements Comparable<GameInfo> {
 		date = time;
 		away = awayTeam;
 		home = homeTeam;
-		checkRep();
-	}
-
-	//Checks this object's rep invariant.
-	private void checkRep(){
-		if(!CHECK_REP){
-			return;
-		}
-		if(date == null || away == null || home == null){
-			throw new IllegalStateException();
-		}
-		if(away.equals(home)){
-			throw new IllegalStateException();
-		}
 	}
 
 	/**Returns this GameInfo's home team.

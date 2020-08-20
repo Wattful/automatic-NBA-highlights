@@ -5,8 +5,6 @@ import java.util.*;
 import java.nio.file.*;
 import java.net.*;
 
-//TODO: implement save, combineVideos.
-
 /**Interface representing a video file.<br>
 Implementing classes must be able to save the file to the user's computer.
 @author Owen Kulik

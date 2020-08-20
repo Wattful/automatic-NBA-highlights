@@ -29,12 +29,6 @@ public enum PlayType implements Constraint {
 	SUBSTITUTION(2),
 	TIMEOUT(0);
 
-	//RI: numberOfPlayers >= 0, supertypes != null
-	/*AF: Represents a type of play. numberOfPlayers is the number of players involved in this type of play. 
-	supertype is all PlayTypes considered this PlayType's supertype - ie dunk is a supertype of and one dunk.*/
-
-	private static final boolean CHECK_REP = true;
-
 	private final int numberOfPlayers;
 	private final PlayType[] supertypes;
 
@@ -48,20 +42,6 @@ public enum PlayType implements Constraint {
 		}
 		numberOfPlayers = np;
 		supertypes = supert;
-		checkRep();
-	}
-
-	//Checks this object's rep invariant.
-	private void checkRep(){
-		if(!CHECK_REP){
-			return;
-		}
-		if(numberOfPlayers < 0){
-			throw new IllegalStateException();
-		}
-		if(supertypes == null){
-			throw new IllegalStateException();
-		}
 	}
 
 	/**Returns true if and only if pt is a supertype of this PlayType.

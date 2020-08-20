@@ -4,8 +4,6 @@ import java.util.*;
 import java.io.*;
 import thybulle.misc.*;
 
-//TODO:
-
 /**Immutable class representing a play, with the ability to get a video of the play.
 @author Owen Kulik
 */
@@ -18,10 +16,6 @@ public abstract class Play {
 	private final Timestamp t;
 	private final Team te;
 	private final Score s;
-
-	//RI: No fields (except video) are null, p.length == pt.getNumberOfPlayers()
-	//AF: Represents a play. The play was made by player p, is of type pt, at time t, and calling getVideo returns a video of the play.
-	//Note that v has different functions depeding on what implementation is being used.
 
 	/**Constructs a Play with the specified fields.
 	@throws NullPointerException if any arguments are null.
@@ -38,20 +32,6 @@ public abstract class Play {
 		this.t = timestamp;
 		this.te = team;
 		this.s = score;
-		checkRep();
-	}
-
-	//Checks this Play's rep invariant.
-	private void checkRep(){
-		if(!CHECK_REP){
-			return;
-		}
-		if(p.size() != pt.getNumberOfPlayers()){
-			throw new IllegalStateException();
-		}
-		if(pt == null || p == null || t == null || te == null){
-			throw new IllegalStateException("A field was null.");
-		}
 	}
 
 	/**Returns a video object containing footage of this play.

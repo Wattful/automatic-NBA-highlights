@@ -28,16 +28,12 @@ This JSON file can have up to four keys, two of which are mandatory.<br>
 </ul>
 */
 public class Browser {
-	private static final boolean CHECK_REP = true;
-
 	static final String DEFAULT_CONFIG_PATH = "../config/browserconfig.json";
 
 	private final String browserName;
 	private final boolean headless;
 	private final boolean suppressOutput;
 	private final String executablePath;
-
-	//RI: No fields are null, browserName is a supported browser.
 
 	/**Constructs a Broswer with the given options.
 	@throws NullPointerException if any parameter is null.
@@ -54,20 +50,6 @@ public class Browser {
 		this.headless = browserName.toLowerCase().equals("edge") ? false : headless;
 		this.suppressOutput = browserName.toLowerCase().equals("edge") ? false : suppressOutput;
 		this.executablePath = executablePath;
-		checkRep();
-	}
-
-	//Checks this object's rep invariant.
-	private void checkRep(){
-		if(!CHECK_REP){
-			return;
-		}
-		if(this.browserName == null || this.executablePath == null){
-			throw new IllegalStateException();
-		}
-		if(!(this.browserName.toLowerCase().equals("firefox") || this.browserName.toLowerCase().equals("chrome") || this.browserName.toLowerCase().equals("edge"))){
-			throw new IllegalStateException("Unrecognized or unsupported browser: " + browserName);
-		}
 	}
 
 	/**Returns a newly constructed WebDriver object adhering to the options this Browser was constructed with.

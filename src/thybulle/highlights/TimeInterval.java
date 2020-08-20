@@ -4,23 +4,17 @@ import java.util.regex.Pattern;
 import java.util.*;
 import thybulle.misc.*;
 
-//TODO:
-
 /**Immutable class representing an interval of time in a game, implemented as a beginning Timestamp and an end Timestamp.
 @author Owen Kulik
 */
 
 public class TimeInterval implements Constraint {
-	private static final boolean CHECK_REP = true;
 	private static final String separator = "\\s*\\-\\s*";
 	private static final String timestampPattern = "\\d{1,2}:\\d\\d\\s+\\d\\w\\w";
 	private static final String timeIntervalPattern = timestampPattern + separator + timestampPattern;
 
 	private final Timestamp beginning;
 	private final Timestamp end;
-
-	//RI: no fields are null, beginning.compareTo(end) <= 0
-	//AF: Represents an interval of gametime beginning at beginning and ending at end.
 
 	/**Constructs a TimeInterval beginning at first and ending at second.
 	@param first The beginning of the TimeInterval.
@@ -37,20 +31,6 @@ public class TimeInterval implements Constraint {
 		}
 		beginning = first;
 		end = second;
-		checkRep();
-	}
-
-	//Checks this object's rep invariant.
-	private void checkRep(){
-		if(!CHECK_REP){
-			return;
-		}
-		if(beginning == null || end == null){
-			throw new IllegalStateException("An field was null.");
-		}
-		if(beginning.compareTo(end) > 0){
-			throw new IllegalStateException("Beginning was after end.");
-		}
 	}
 
 	/**Returns the beginning of the TimeInterval.

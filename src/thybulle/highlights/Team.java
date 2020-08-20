@@ -3,8 +3,6 @@ package thybulle.highlights;
 import java.util.*;
 import thybulle.misc.*;
 
-//TODO:
-
 /**Immutable class representing a team. <br>
 This class uses interning, and as such no constructors are public. <br>
 If one wishes to "construct" a team, they should use the {@code getNBATeam(String)} method.<br>
@@ -75,8 +73,6 @@ Here is a list of all such team names:
 */
 
 public class Team implements Constraint, Comparable<Team> {
-	private static final boolean CHECK_REP = true;
-
 	private final String teamName;
 
 	private static final Map<String, Team> interning = new HashMap<String, Team>();
@@ -88,23 +84,10 @@ public class Team implements Constraint, Comparable<Team> {
 			"washington wizards", "charlotte bobcats", "new orleans hornets", "team lebron", "team giannis", "team stephen", "east", "west", "world", "usa", "team shaq", 
 			"team chuck", "team webber", "team hill");
 
-	//RI: No fields are null.
-	//AF: Represents a team with name teamName.
-
 	//Constructs a team with name name.
 	private Team(String name){
 		teamName = name;
 		checkRep();
-	}
-
-	//Checks this object's rep invariant.
-	private void checkRep(){
-		if(!CHECK_REP){
-			return;
-		}
-		if(teamName == null){
-			throw new IllegalStateException("A field was null.");
-		}
 	}
 
 	/**Returns the NBA team with the given name, or null if no such team exists.<br>

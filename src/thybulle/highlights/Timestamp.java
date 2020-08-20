@@ -2,24 +2,15 @@ package thybulle.highlights;
 
 import java.util.*;
 
-//TODO:
-
 /**Immutable class representing a time in a game, including the quarter and the time remaining in the quarter.
 @author Owen Kulik
 */
 
 public class Timestamp implements Comparable<Timestamp> {
-	private static final boolean CHECK_REP = true;
 	private static final List<String> quarterNames = List.of("1st", "2nd", "3rd", "4th");
 
 	private final int quarter;
 	private final int timeRemaining;
-
-	//RI: quarter > 0 and 0 <= timeRemaining <= 720 if quarter <= 4, otherwise 0 <= timeRemaining <= 300.
-	/*AF: Represents a time in a game. 
-	Quarter = 1-4 corresponds to the first through fourth quarters, higher values correspond to overtimes: 5 = ot, 6 = 2ot, so on.
-	timeRemaining is the number of seconds remaining in the quarter.
-	*/
 
 	/**Constructs a new Timestamp with the specified quarter and time remaining.<br>
 	quar = 1-4 corresponds to the first through fourth quarters, higher values correspond to overtimes: 5 = ot, 6 = 2ot, so on.<br>
@@ -40,23 +31,6 @@ public class Timestamp implements Comparable<Timestamp> {
 		}
 		quarter = quar;
 		timeRemaining = time;
-		checkRep();
-	}
-
-	//Checks the Timestamp's rep invariant.
-	private void checkRep(){
-		if(!CHECK_REP){
-			return;
-		}
-		if(quarter <= 0){
-			throw new IllegalStateException("Quarter was non positive.");
-		} else if(timeRemaining < 0){
-			throw new IllegalStateException("Time remaining was negative.");
-		} else if(quarter <= 4 && timeRemaining > 720){
-			throw new IllegalStateException("There was greater than 12 minutes in the quarter.");
-		} else if(quarter > 4 && timeRemaining > 300){
-			throw new IllegalStateException("There was greater than 5 minutes in the overtime period.");
-		}
 	}
 
 	/**Returns this timestamp's quarter.

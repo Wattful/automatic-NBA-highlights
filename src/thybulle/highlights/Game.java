@@ -6,8 +6,6 @@ import java.time.temporal.*;
 import java.io.*;
 import thybulle.misc.*;
 
-//TODO:
-
 /**Immutable class representing an NBA game.<br>
 This class contains play-by-play data for a game, as well as information about when the game was played, the final score, and the teams playing.<br>
 Game acts as the main way for the core package to interact with the datacollection package.<br>
@@ -19,22 +17,12 @@ In order to get a Game object, one must use a class which implements the GameSou
 */
 
 public class Game {
-	private static final boolean CHECK_REP = true;
-
 	private final LocalDate date;
 
 	private final Team awayTeam;
 	private final Team homeTeam;
 
 	private final List<Play> data = new LinkedList<Play>();
-
-	/*RI: no fields are null, all plays in data were committed by either awayTeam or homeTeam, !awayTeam.equals(homeTeam), 
-	awayScore != homeScore, awayWon == awayScore > homeScore
-	*/
-	/*AF: Represents a game. date is the date and time of the game, awayTeam and homeTeam are the participating teams,
-	awayScore and homeScore are each team's scores, awayWon is whether the away team won, data is each play in the game, 
-	sorted by when they occurred in the game.
-	*/
 
 	//Constructs a game from the given data. This constructor should only be called from the Source.getGame method.
 	Game(GameInfo gi, Collection<? extends Play> plays){
@@ -48,28 +36,6 @@ public class Game {
 		date = gi.date();
 		awayTeam = gi.awayTeam();
 		homeTeam = gi.homeTeam();
-		checkRep();
-	}
-
-	//Checks this object's rep invariant.
-	private void checkRep(){
-		if(!CHECK_REP){
-			return;
-		}
-		if(data == null || date == null || awayTeam == null || homeTeam == null){
-			throw new IllegalStateException();
-		}
-		if(awayTeam.equals(homeTeam)){
-			throw new IllegalStateException();
-		}
-		if(data.contains(null)){
-			throw new IllegalStateException();
-		}
-		for(Play p : data){
-			if(!p.getTeam().equals(awayTeam) && !p.getTeam().equals(homeTeam)){
-				throw new IllegalStateException();
-			}
-		}
 	}
 
 	/**Returns an unmodifiable list of plays with all plays in this Game that meet the given constraints, in order of when they occurred in the game.<br>

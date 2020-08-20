@@ -10,8 +10,6 @@ Includes the ability to get a URL object pointing to the video.
 */
 
 public class InternetVideo implements Video {
-	private static final boolean CHECK_REP = true;
-
 	private final URL internetLocation;
 
 	/**Constructs an InternetVideo pointing to the given URL.
@@ -38,16 +36,6 @@ public class InternetVideo implements Video {
 			this.internetLocation = new URL(url);
 		} catch(MalformedURLException e){
 			throw new IllegalArgumentException("Malformed URL.", e);
-		}
-		checkRep();
-	}
-
-	private void checkRep(){
-		if(!CHECK_REP){
-			return;
-		}
-		if(this.internetLocation == null){
-			throw new IllegalStateException();
 		}
 	}
 

@@ -1,7 +1,5 @@
 package thybulle.misc;
 
-//TODO:
-
 /**Immutable class representing a pair.
 @author Owen Kulik
 */
@@ -9,9 +7,6 @@ package thybulle.misc;
 public class Pair<F, S> {
 	private final F first;
 	private final S second;
-
-	//RI: true
-	//AF: Represents an immutable pair.
 
 	/**Creates a pair with f and s.
 	@param f the first value in the pair.

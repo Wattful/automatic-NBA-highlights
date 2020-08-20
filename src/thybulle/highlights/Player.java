@@ -3,8 +3,6 @@ package thybulle.highlights;
 import java.util.*;
 import thybulle.misc.*;
 
-//TODO:
-
 /**Immutable class representing a player. <br>
 This class uses interning, and as such no constructors are public. <br>
 If one wishes to "construct" a player, they should use the {@code get(String, String)} method.
@@ -12,15 +10,10 @@ If one wishes to "construct" a player, they should use the {@code get(String, St
 */
 
 public class Player implements Constraint, Comparable<Player> {
-	private static final boolean CHECK_REP = true;
-
 	private final String firstName;
 	private final String lastName;
 
 	private static final Map<Pair<String, String>, Player> interning /*please hire me for an internship.*/ = new HashMap<Pair<String, String>, Player>();
-
-	//RI: lastName is not null.
-	//AF: Represents an immutable player with first name firstName and last name lastName. If a player has one name (ex Nene), firstName is null. 
 
 	/*Constructs a player with first name first and last name last. If a player only has one name (ex Nene), first should be null.
 	*/
@@ -30,17 +23,6 @@ public class Player implements Constraint, Comparable<Player> {
 		}
 		firstName = first;
 		lastName = last;
-		checkRep();
-	}
-
-	//Checks the rep invariant of this Player
-	private void checkRep(){
-		if(!CHECK_REP){
-			return;
-		}
-		if(lastName == null){
-			throw new IllegalStateException("Last name was null.");
-		}
 	}
 
 	/**Returns a player with first name first and last name last. If a player only has one name (ex Nene), first should be null.<br>

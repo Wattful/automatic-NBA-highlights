@@ -24,12 +24,12 @@ public class InputParsing {
 	private static final String yearIntervalPattern = yearPattern + separator + yearPattern;
 	private static final String seasonFormatPattern = "[\\w&&[\\D]]+";
 	private static final String seasonPattern = yearIntervalPattern + seasonFormatPattern;
+	private static final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("MM/dd/yyyy");
 
 	//Lists of dates of the start and end of each year's preseason, regular season, all-star weekend, and playoffs.
 	//BaseYear is the first season with data, no earlier seasons can be used.
 	private static final Year baseYear = Year.of(2012);
-	private static final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("MM/dd/yyyy");
-	private static final List<Pair<LocalDate, LocalDate>> preseasonDates = List.of(
+	private static final List<List<Pair<LocalDate, LocalDate>>> preseasonDates = List.of(
 		new Pair<LocalDate, LocalDate>(LocalDate.of(2012, 10, 5), LocalDate.of(2012, 10, 26)),
 		new Pair<LocalDate, LocalDate>(LocalDate.of(2013, 10, 5), LocalDate.of(2013, 10, 25)),
 		new Pair<LocalDate, LocalDate>(LocalDate.of(2014, 10, 4), LocalDate.of(2014, 10, 24)),
@@ -39,7 +39,7 @@ public class InputParsing {
 		new Pair<LocalDate, LocalDate>(LocalDate.of(2018, 9, 28), LocalDate.of(2018, 10, 12)),
 		new Pair<LocalDate, LocalDate>(LocalDate.of(2019, 9, 30), LocalDate.of(2019, 10, 18))
 	);
-	private static final List<Pair<LocalDate, LocalDate>> regularSeasonDates = List.of(
+	private static final List<List<Pair<LocalDate, LocalDate>>> regularSeasonDates = List.of(
 		new Pair<LocalDate, LocalDate>(LocalDate.of(2012, 10, 30), LocalDate.of(2013, 4, 17)),
 		new Pair<LocalDate, LocalDate>(LocalDate.of(2013, 10, 29), LocalDate.of(2014, 4, 16)),
 		new Pair<LocalDate, LocalDate>(LocalDate.of(2014, 10, 28), LocalDate.of(2015, 4, 15)),
@@ -49,7 +49,7 @@ public class InputParsing {
 		new Pair<LocalDate, LocalDate>(LocalDate.of(2018, 10, 16), LocalDate.of(2019, 4, 10)),
 		new Pair<LocalDate, LocalDate>(LocalDate.of(2019, 10, 22), LocalDate.of(2020, 4, 15))
 	);
-	private static final List<Pair<LocalDate, LocalDate>> allStarWeekendDates = List.of(
+	private static final List<List<Pair<LocalDate, LocalDate>>> allStarWeekendDates = List.of(
 		new Pair<LocalDate, LocalDate>(LocalDate.of(2013, 2, 15), LocalDate.of(2013, 2, 17)),
 		new Pair<LocalDate, LocalDate>(LocalDate.of(2014, 2, 14), LocalDate.of(2014, 2, 16)),
 		new Pair<LocalDate, LocalDate>(LocalDate.of(2015, 2, 13), LocalDate.of(2015, 2, 15)),
@@ -59,7 +59,7 @@ public class InputParsing {
 		new Pair<LocalDate, LocalDate>(LocalDate.of(2019, 2, 15), LocalDate.of(2019, 2, 17)),
 		new Pair<LocalDate, LocalDate>(LocalDate.of(2020, 2, 14), LocalDate.of(2020, 2, 16))
 	);
-	private static final List<Pair<LocalDate, LocalDate>> playoffsDates = List.of(
+	private static final List<List<Pair<LocalDate, LocalDate>>> playoffsDates = List.of(
 		new Pair<LocalDate, LocalDate>(LocalDate.of(2013, 4, 20), LocalDate.of(2013, 6, 3)),
 		new Pair<LocalDate, LocalDate>(LocalDate.of(2014, 4, 19), LocalDate.of(2014, 5, 31)),
 		new Pair<LocalDate, LocalDate>(LocalDate.of(2015, 4, 18), LocalDate.of(2015, 5, 27)),
@@ -69,7 +69,7 @@ public class InputParsing {
 		new Pair<LocalDate, LocalDate>(LocalDate.of(2019, 4, 15), LocalDate.of(2019, 5, 25)),
 		new Pair<LocalDate, LocalDate>(LocalDate.of(2020, 4, 18), LocalDate.of(2020, 6, 3))
 	);
-	private static final List<Pair<LocalDate, LocalDate>> finalsDates = List.of(
+	private static final List<List<Pair<LocalDate, LocalDate>>> finalsDates = List.of(
 		new Pair<LocalDate, LocalDate>(LocalDate.of(2013, 6, 6), LocalDate.of(2013, 6, 20)),
 		new Pair<LocalDate, LocalDate>(LocalDate.of(2014, 6, 5), LocalDate.of(2014, 6, 15)),
 		new Pair<LocalDate, LocalDate>(LocalDate.of(2015, 6, 4), LocalDate.of(2015, 6, 16)),
@@ -348,7 +348,7 @@ public class InputParsing {
 		try{
 			parseMethod = argumentClass.getMethod("parse", String.class);
 			if(!Constraint.class.isAssignableFrom(parseMethod.getReturnType())){
-				throw new NoSuchMethodException();
+				parseMethod = null;
 			}
 		} catch(NoSuchMethodException e){
 			parseMethod = null;

@@ -1,7 +1,5 @@
 package thybulle.highlights;
 
-//TODO:
-
 /**Immutable constraint representing the opposite of a given constraint.<br>
 For example, if a NotConstraint is constructed with constraint A,
 then a play will satisfy this NotConstraint if and only if it does not satisfy A.
@@ -9,12 +7,7 @@ then a play will satisfy this NotConstraint if and only if it does not satisfy A
 */
 
 public class NotConstraint implements Constraint {
-	private static final boolean CHECK_REP = true;
-
 	private final Constraint constraint;
-
-	//RI: constraint != null
-	//AF: represents the opposite of a given constraint. constraint is the given constraint.
 
 	/**Constructs a NotConstraint with the given constraint.
 	@param c The constraint.
@@ -25,17 +18,6 @@ public class NotConstraint implements Constraint {
 			throw new NullPointerException();
 		}
 		constraint = c;
-		checkRep();
-	}
-
-	//Checks this object's rep invariant.
-	private void checkRep(){
-		if(!CHECK_REP){
-			return;
-		}
-		if(constraint == null){
-			throw new IllegalStateException();
-		}
 	}
 
 	/**Returns the constraint contained in this NotConstraint.

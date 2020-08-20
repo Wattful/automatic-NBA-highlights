@@ -2,8 +2,6 @@ package thybulle.highlights;
 
 import java.util.*;
 
-//TODO: Refactor this by joining it with ConjunctiveConstraint.
-
 /**Constraint representing a group of constraints, evaluated disjunctively.<br>
 For example, if a DisjunctiveConstraint is constructed with constraints A, B, and C, 
 then a play must satisfy A, B, or C to satisfy this constraint.
@@ -11,12 +9,7 @@ then a play must satisfy A, B, or C to satisfy this constraint.
 */
 
 public class OrConstraint implements Constraint {
-	private static final boolean CHECK_REP = true;
-
 	private final Set<Constraint> constraints;
-
-	//RI: no fields are null, constraints.size() > 0, constraints is immutable.
-	//AF: Represents a group of constraints, evaluated disjunctively. constraints is the group of constraints.
 
 	/**Constructs a DisjunctiveConstraint consisting of the given constraints.
 	@param c The constraints to use.
@@ -28,24 +21,6 @@ public class OrConstraint implements Constraint {
 			throw new IllegalArgumentException("No constraints were provided.");
 		}
 		constraints = Set.of(c);
-		checkRep();
-	}
-
-	//Checks this object's rep invariant.
-	private void checkRep(){
-		if(!CHECK_REP){
-			return;
-		}
-		if(constraints == null){
-			throw new IllegalStateException();
-		}
-		if(constraints.isEmpty()){
-			throw new IllegalStateException();
-		}
-		try {
-			constraints.add(null);
-			throw new IllegalStateException();
-		} catch(UnsupportedOperationException e){}
 	}
 
 	/**Returns the number of constraints in this DisjunctiveConstraint.<br>

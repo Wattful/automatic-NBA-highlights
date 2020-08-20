@@ -265,17 +265,6 @@ public class AdvancedStats implements GameSource {
 		JSONObject obj = new JSONObject(Files.readString(Path.of(DEFAULT_CONFIG_PATH)));
 		return new AdvancedStats(obj.getBoolean("read"), obj.getBoolean("write"), obj.optString("readLocation", DEFAULT_DATA_LOCATION), obj.optString("writeLocation", DEFAULT_DATA_LOCATION));
 	}
-	
-	private void setup(){
-		if(driver == null){
-			driver = browser.getDriver();
-		}
-	}
-
-	private void reset() throws IOException {
-		this.close();
-		this.setup();
-	}
 
 	/**Returns a Game object with play-by-play data for the given GameInfo, 
 	or null if the GameInfo does not exist, or if the play-by-play data could not be obtained.
@@ -286,9 +275,7 @@ public class AdvancedStats implements GameSource {
 	*/
 	public Game getGame(GameInfo gi) throws IOException {
 		try{
-			synchronized(this){
-				return getGameInternal(gi);
-			}
+			return getGameInternal(gi);
 		} catch(AdvancedStatsControlFlowException e){
 			logging.error("Could not get play-by-play data for " + gi.toString());
 			return null;
@@ -562,9 +549,7 @@ public class AdvancedStats implements GameSource {
 	 */
 	public List<GameInfo> getGameInformationOnDay(LocalDate ld) throws IOException {
 		try {
-			synchronized(this){
-				return getGameInformationOnDayInternal(ld);
-			}
+			return getGameInformationOnDayInternal(ld);
 		} catch(AdvancedStatsControlFlowException e){
 			logging.error("Could not get game information for " + ld.toString());
 			return null;
@@ -666,6 +651,17 @@ public class AdvancedStats implements GameSource {
 		return null;
 	}
 
+	private synchronized void setup(){
+		if(driver == null){
+			driver = browser.getDriver();
+		}
+	}
+
+	private synchronized void reset() throws IOException {
+		this.close();
+		this.setup();
+	}
+
 	//If in write mode, flushes the current JSON data
 	private void flush() throws IOException {
 		if(this.write){
@@ -679,7 +675,7 @@ public class AdvancedStats implements GameSource {
 	 * Once this method is called, no other AdvancedStats methods can be called.
 	 @throws IOException if an IO error occurs.
 	 */
-	public void close() throws IOException {
+	public synchronized void close() throws IOException {
 		this.flush();
 		if(this.driver != null){
 			try{
@@ -691,7 +687,7 @@ public class AdvancedStats implements GameSource {
 		}
 	}
 
-    private synchronized Document renderPage(String filePath, long timeout, long minTimeout, com.google.common.base.Function<WebDriver, ?> func) throws IOException {
+    private Document renderPage(String filePath, long timeout, long minTimeout, com.google.common.base.Function<WebDriver, ?> func) throws IOException {
         return renderPage(filePath, timeout, minTimeout, func, 0);
     }
 
@@ -700,14 +696,16 @@ public class AdvancedStats implements GameSource {
 			throw new AdvancedStatsControlFlowException();
 		}
 		setup();
+		driver.manage().timeouts().pageLoadTimeout(timeout, java.util.concurrent.TimeUnit.MILLISECONDS);
 		try{
 			driver.get(filePath);
+			new WebDriverWait(driver, timeout/1000/*Duration.ofMillis(timeout)*/).until(func);
 		} catch(UnreachableBrowserException e){
+			logging.info("Restarting browser.");
 			this.reset();
-		}
-        try {
-        	new WebDriverWait(driver, timeout/*Duration.ofMillis(timeout)*/).until(func);
-        } catch(TimeoutException e){
+			return renderPage(filePath, timeout, minTimeout, func, retry);
+		} catch(TimeoutException e){
+			logging.info("Timeout exceeded. Restarting browser.");
         	this.reset();
         	return renderPage(filePath, timeout, minTimeout, func, retry + 1);
         }

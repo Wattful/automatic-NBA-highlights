@@ -5,8 +5,6 @@ import java.io.*;
 import thybulle.highlights.*;
 import thybulle.misc.*;
 
-//TODO:
-
 /**Class which compiles highlights.<br>
 It takes as input games to get highlights from and contraints to apply to those games.<br>
 From these inputs, it compiles a Highlights object with a Video of all plays in the source games that meet the given constraints.

@@ -9,9 +9,7 @@ import java.time.LocalDate;
 import thybulle.highlights.*;
 import thybulle.misc.*;
 
-//Refactoring: unify varargs/lists, Figure out how to parse broken games, change browser name to enum
-
-//TODO: Figure out custom constraint without input, write Score, ScoreConstraint classes, modify AdvancedStats to record score, test new features, remove rep checking functions
+//Refactoring: Remove (most) varargs methods, Figure out how to parse broken games, change browser name to enum, fix and commit tests, fix 2019-20 season dates
 
 public class Driver {
 	static final Logging logging = new Logging(System.out);
@@ -34,13 +32,11 @@ public class Driver {
 			Scanner keyboard = new Scanner(System.in);
 			while(keyboard.hasNextLine()){
 				String input = keyboard.nextLine();
-				if(input.toLowerCase().equals("quit") || input.toLowerCase().equals("exit") ){
+				if(input.toLowerCase().equals("quit") || input.toLowerCase().equals("exit")){
 					logging.info("Cleaning up resources");
 					try{
-						synchronized(source){
-							source.close();
-							System.exit(0);
-						}
+						source.close();
+						System.exit(0);
 					} catch(IOException e){
 						throw new UncheckedIOException(e);
 					}
