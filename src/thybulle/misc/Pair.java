@@ -17,6 +17,15 @@ public class Pair<F, S> {
 		second = s;
 	}
 
+	/**Returns a pair consisting of the given values.
+	@param f the first value in the pair.
+	@param s the second value in the pair.
+	@return the pair.
+	*/
+	public static <F, S> Pair<F, S> of(F f, S s){
+		return new Pair<F, S>(f, s);
+	}
+
 	/**Returns the first value in the pair.
 	@return the first value in the pair.
 	*/
