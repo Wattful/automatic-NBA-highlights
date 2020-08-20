@@ -30,55 +30,63 @@ public class InputParsing {
 	//BaseYear is the first season with data, no earlier seasons can be used.
 	private static final Year baseYear = Year.of(2012);
 	private static final List<List<Pair<LocalDate, LocalDate>>> preseasonDates = List.of(
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2012, 10, 5), LocalDate.of(2012, 10, 26)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2013, 10, 5), LocalDate.of(2013, 10, 25)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2014, 10, 4), LocalDate.of(2014, 10, 24)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2015, 10, 2), LocalDate.of(2015, 10, 23)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2016, 10, 1), LocalDate.of(2016, 10, 21)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2017, 9, 30), LocalDate.of(2017, 10, 13)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2018, 9, 28), LocalDate.of(2018, 10, 12)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2019, 9, 30), LocalDate.of(2019, 10, 18))
+		List.of(Pair.of(LocalDate.of(2012, 10, 5), LocalDate.of(2012, 10, 26))),
+		List.of(Pair.of(LocalDate.of(2013, 10, 5), LocalDate.of(2013, 10, 25))),
+		List.of(Pair.of(LocalDate.of(2014, 10, 4), LocalDate.of(2014, 10, 24))),
+		List.of(Pair.of(LocalDate.of(2015, 10, 2), LocalDate.of(2015, 10, 23))),
+		List.of(Pair.of(LocalDate.of(2016, 10, 1), LocalDate.of(2016, 10, 21))),
+		List.of(Pair.of(LocalDate.of(2017, 9, 30), LocalDate.of(2017, 10, 13))),
+		List.of(Pair.of(LocalDate.of(2018, 9, 28), LocalDate.of(2018, 10, 12))),
+		List.of(Pair.of(LocalDate.of(2019, 9, 30), LocalDate.of(2019, 10, 18)), Pair.of(LocalDate.of(2020, 7, 22), LocalDate.of(2020, 7, 28)))
 	);
 	private static final List<List<Pair<LocalDate, LocalDate>>> regularSeasonDates = List.of(
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2012, 10, 30), LocalDate.of(2013, 4, 17)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2013, 10, 29), LocalDate.of(2014, 4, 16)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2014, 10, 28), LocalDate.of(2015, 4, 15)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2015, 10, 27), LocalDate.of(2016, 4, 13)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2016, 10, 25), LocalDate.of(2017, 4, 12)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2017, 10, 17), LocalDate.of(2018, 4, 11)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2018, 10, 16), LocalDate.of(2019, 4, 10)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2019, 10, 22), LocalDate.of(2020, 4, 15))
+		List.of(Pair.of(LocalDate.of(2012, 10, 30), LocalDate.of(2013, 2, 14)), Pair.of(LocalDate.of(2013, 2, 18), LocalDate.of(2013, 4, 17))),
+		List.of(Pair.of(LocalDate.of(2013, 10, 29), LocalDate.of(2014, 2, 13)), Pair.of(LocalDate.of(2014, 2, 17), LocalDate.of(2014, 4, 16))),
+		List.of(Pair.of(LocalDate.of(2014, 10, 28), LocalDate.of(2015, 2, 12)), Pair.of(LocalDate.of(2015, 2, 16), LocalDate.of(2015, 4, 15))),
+		List.of(Pair.of(LocalDate.of(2015, 10, 27), LocalDate.of(2016, 2, 11)), Pair.of(LocalDate.of(2016, 2, 15), LocalDate.of(2016, 4, 13))),
+		List.of(Pair.of(LocalDate.of(2016, 10, 25), LocalDate.of(2017, 2, 16)), Pair.of(LocalDate.of(2017, 2, 20), LocalDate.of(2017, 4, 12))),
+		List.of(Pair.of(LocalDate.of(2017, 10, 17), LocalDate.of(2018, 2, 15)), Pair.of(LocalDate.of(2018, 2, 19), LocalDate.of(2018, 4, 11))),
+		List.of(Pair.of(LocalDate.of(2018, 10, 16), LocalDate.of(2019, 2, 14)), Pair.of(LocalDate.of(2019, 2, 18), LocalDate.of(2019, 4, 10))),
+		List.of(Pair.of(LocalDate.of(2019, 10, 22), LocalDate.of(2020, 2, 13)), Pair.of(LocalDate.of(2020, 2, 17), LocalDate.of(2020, 3, 11)), Pair.of(LocalDate.of(2020, 7, 30), LocalDate.of(2020, 8, 14)))
 	);
 	private static final List<List<Pair<LocalDate, LocalDate>>> allStarWeekendDates = List.of(
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2013, 2, 15), LocalDate.of(2013, 2, 17)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2014, 2, 14), LocalDate.of(2014, 2, 16)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2015, 2, 13), LocalDate.of(2015, 2, 15)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2016, 2, 12), LocalDate.of(2016, 2, 14)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2017, 2, 17), LocalDate.of(2017, 2, 19)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2018, 2, 16), LocalDate.of(2018, 2, 18)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2019, 2, 15), LocalDate.of(2019, 2, 17)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2020, 2, 14), LocalDate.of(2020, 2, 16))
+		List.of(Pair.of(LocalDate.of(2013, 2, 15), LocalDate.of(2013, 2, 17))),
+		List.of(Pair.of(LocalDate.of(2014, 2, 14), LocalDate.of(2014, 2, 16))),
+		List.of(Pair.of(LocalDate.of(2015, 2, 13), LocalDate.of(2015, 2, 15))),
+		List.of(Pair.of(LocalDate.of(2016, 2, 12), LocalDate.of(2016, 2, 14))),
+		List.of(Pair.of(LocalDate.of(2017, 2, 17), LocalDate.of(2017, 2, 19))),
+		List.of(Pair.of(LocalDate.of(2018, 2, 16), LocalDate.of(2018, 2, 18))),
+		List.of(Pair.of(LocalDate.of(2019, 2, 15), LocalDate.of(2019, 2, 17))),
+		List.of(Pair.of(LocalDate.of(2020, 2, 14), LocalDate.of(2020, 2, 16)))
 	);
 	private static final List<List<Pair<LocalDate, LocalDate>>> playoffsDates = List.of(
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2013, 4, 20), LocalDate.of(2013, 6, 3)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2014, 4, 19), LocalDate.of(2014, 5, 31)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2015, 4, 18), LocalDate.of(2015, 5, 27)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2016, 4, 16), LocalDate.of(2016, 5, 30)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2017, 4, 15), LocalDate.of(2017, 5, 25)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2018, 4, 14), LocalDate.of(2018, 5, 28)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2019, 4, 15), LocalDate.of(2019, 5, 25)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2020, 4, 18), LocalDate.of(2020, 6, 3))
+		List.of(Pair.of(LocalDate.of(2013, 4, 20), LocalDate.of(2013, 6, 3))),
+		List.of(Pair.of(LocalDate.of(2014, 4, 19), LocalDate.of(2014, 5, 31))),
+		List.of(Pair.of(LocalDate.of(2015, 4, 18), LocalDate.of(2015, 5, 27))),
+		List.of(Pair.of(LocalDate.of(2016, 4, 16), LocalDate.of(2016, 5, 30))),
+		List.of(Pair.of(LocalDate.of(2017, 4, 15), LocalDate.of(2017, 5, 25))),
+		List.of(Pair.of(LocalDate.of(2018, 4, 14), LocalDate.of(2018, 5, 28))),
+		List.of(Pair.of(LocalDate.of(2019, 4, 15), LocalDate.of(2019, 5, 25))),
+		List.of(Pair.of(LocalDate.of(2020, 8, 15), LocalDate.of(2020, 9, 28)))
 	);
 	private static final List<List<Pair<LocalDate, LocalDate>>> finalsDates = List.of(
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2013, 6, 6), LocalDate.of(2013, 6, 20)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2014, 6, 5), LocalDate.of(2014, 6, 15)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2015, 6, 4), LocalDate.of(2015, 6, 16)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2016, 6, 2), LocalDate.of(2016, 6, 19)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2017, 6, 1), LocalDate.of(2017, 6, 12)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2018, 5, 31), LocalDate.of(2018, 6, 8)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2019, 5, 30), LocalDate.of(2019, 6, 15)),
-		new Pair<LocalDate, LocalDate>(LocalDate.of(2020, 6, 4), LocalDate.of(2020, 6, 21))
+		List.of(Pair.of(LocalDate.of(2013, 6, 6), LocalDate.of(2013, 6, 20))),
+		List.of(Pair.of(LocalDate.of(2014, 6, 5), LocalDate.of(2014, 6, 15))),
+		List.of(Pair.of(LocalDate.of(2015, 6, 4), LocalDate.of(2015, 6, 16))),
+		List.of(Pair.of(LocalDate.of(2016, 6, 2), LocalDate.of(2016, 6, 19))),
+		List.of(Pair.of(LocalDate.of(2017, 6, 1), LocalDate.of(2017, 6, 12))),
+		List.of(Pair.of(LocalDate.of(2018, 5, 31), LocalDate.of(2018, 6, 8))),
+		List.of(Pair.of(LocalDate.of(2019, 5, 30), LocalDate.of(2019, 6, 15))),
+		List.of(Pair.of(LocalDate.of(2020, 9, 30), LocalDate.of(2020, 10, 13)))
 	);
+	private static final Map<String, List<List<Pair<LocalDate, LocalDate>>>> seasonCodeMappings = new HashMap<String, List<List<Pair<LocalDate, LocalDate>>>>();
+	static{
+		seasonCodeMappings.put("e", preseasonDates);
+		seasonCodeMappings.put("r", regularSeasonDates);
+		seasonCodeMappings.put("a", allStarWeekendDates);
+		seasonCodeMappings.put("p", playoffsDates);
+		seasonCodeMappings.put("f", finalsDates);
+	}
 
 	private static final Map<String, Class<? extends Constraint>> includedConstraints = new HashMap<String, Class<? extends Constraint>>();
 	static{
@@ -152,7 +160,7 @@ public class InputParsing {
 	private static Collection<Pair<LocalDate, LocalDate>> parseDates(String input){
 		if(Pattern.matches(datePattern, input)){
 			LocalDate d = parseDate(input);
-			return List.of(new Pair<LocalDate, LocalDate>(d, d));
+			return List.of(Pair.of(d, d));
 		} else if(Pattern.matches(dateIntervalPattern, input)){
 			String[] split = input.split(separator);
 			LocalDate d1 = parseDate(split[0]);
@@ -160,7 +168,7 @@ public class InputParsing {
 			if(d2.isBefore(d1)) {
 				throw new JSONException("Second date cannot be before first date: " + input);
 			}
-			return List.of(new Pair<LocalDate, LocalDate>(d1, d2));
+			return List.of(Pair.of(d1, d2));
 		} else if(Pattern.matches(seasonPattern, input)){
 			String[] split = input.replaceAll(seasonFormatPattern, "").split(separator);
 			Year beginning = Year.parse(split[0]);
@@ -187,7 +195,7 @@ public class InputParsing {
 	//Parses a date from a string. Precondition is that pattern.matches(datePattern, input)
 	private static LocalDate parseDate(String input){
 		LocalDate d = LocalDate.parse(input, dateFormat);
-		if(d.isBefore(preseasonDates.get(0).first())){
+		if(d.isBefore(preseasonDates.get(0).get(0).first())){
 			throw new JSONException("Cannot parse dates before the 2012-13 season: " + input);
 		}
 		return d;
@@ -199,26 +207,11 @@ public class InputParsing {
 		boolean detected = false;
 		int index = year.getValue() - baseYear.getValue();
 		info = info.toLowerCase();
-		if(info.contains("r")){
-			detected = true;
-			dates.add(new Pair<LocalDate, LocalDate>(regularSeasonDates.get(index).first(), allStarWeekendDates.get(index).first()));
-			dates.add(new Pair<LocalDate, LocalDate>(allStarWeekendDates.get(index).second(), regularSeasonDates.get(index).second()));
-		}
-		if(info.contains("p")){
-			detected = true;
-			dates.add(playoffsDates.get(index));
-		}
-		if(info.contains("e")){
-			detected = true;
-			dates.add(preseasonDates.get(index));
-		}
-		if(info.contains("a")){
-			detected = true;
-			dates.add(allStarWeekendDates.get(index));
-		}
-		if(info.contains("f")){
-			detected = true;
-			dates.add(finalsDates.get(index));
+		for(Map.Entry<String, List<List<Pair<LocalDate, LocalDate>>>> entry : seasonCodeMappings.entrySet()){
+			if(info.contains(entry.getKey())){
+				detected = true;
+				dates.addAll(entry.getValue().get(index));
+			}
 		}
 		if(!detected){
 			throw new JSONException("Improperly formatted season type string: " + info);
