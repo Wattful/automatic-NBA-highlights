@@ -20,15 +20,15 @@ public abstract class Play {
 	/**Constructs a Play with the specified fields.
 	@throws NullPointerException if any arguments are null.
 	*/
-	protected Play(PlayType playType, Timestamp timestamp, Team team, Score score, Player... player){
+	protected Play(PlayType playType, Timestamp timestamp, Team team, Score score, Collection<? extends Player> player){
 		if(playType == null || player == null || timestamp == null || team == null || score == null){
 			throw new NullPointerException("A field was null.");
 		}
-		if(player.length != playType.getNumberOfPlayers()){
+		if(player.size() != playType.getNumberOfPlayers()){
 			throw new IllegalArgumentException("Number of players did not match the number required for the play type.");
 		}
 		this.pt = playType;
-		this.p = List.of(player);
+		this.p = List.copyOf(player);
 		this.t = timestamp;
 		this.te = team;
 		this.s = score;

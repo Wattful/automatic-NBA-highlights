@@ -9,7 +9,7 @@ import java.time.LocalDate;
 import thybulle.highlights.*;
 import thybulle.misc.*;
 
-//Refactoring: Remove (most) varargs methods, Figure out how to parse broken games, change browser name to enum, fix and commit tests, fix 2019-20 season dates
+//Refactoring: Remove (most) varargs methods, Figure out how to parse broken games, change browser name to enum, fix and commit tests, start using ArrayList, change play field names
 
 public class Driver {
 	static final Logging logging = new Logging(System.out);
@@ -45,15 +45,15 @@ public class Driver {
 		}).start();
 
 		logging.info("Getting game information");
-		List<GameInfo> information = new LinkedList<GameInfo>();
+		List<GameInfo> information = new ArrayList<GameInfo>();
 		for(Pair<LocalDate, LocalDate> p : dataset) {
-			information.addAll(source.getTeamGameInformationBetweenDates(p.first(), p.second(), teams.toArray(new Team[0])));
+			information.addAll(source.getTeamGameInformationBetweenDates(p.first(), p.second(), teams));
 		}
 		logging.info("Getting play-by-play data");
 		List<Game> games = source.getGames(information);
 		logging.info("Done getting play-by-play data. Found " + games.size() + (games.size() == 1 ? " game." : " games."));
-		hc.addGames(games.toArray(new Game[0]));
-		hc.addConstraints(constraints.toArray(new Constraint[0]));
+		hc.addGames(games);
+		hc.addConstraints(constraints);
 		logging.info("Finding all plays that satisfy constraints");
 		Highlights h = hc.compile();
 		logging.info("Found " + h.size() + (h.size() == 1 ? " play." : " plays."));

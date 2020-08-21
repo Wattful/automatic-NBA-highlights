@@ -18,7 +18,7 @@ public class Highlights {
 	 * @throws NullPointerException if p is null.
 	 */
 	Highlights(List<? extends Play> p){
-		plays = new LinkedList<Play>(p);
+		plays = new ArrayList<Play>(p);
 	}
 
 	/**Saves this highlights video to the specified path.
@@ -50,7 +50,7 @@ public class Highlights {
 		}
 		output.info("Finished resolving play videos.");
 		//@SuppressWarnings("unchecked")
-		video = FileVideo.combineVideos(path, output, v.toArray(new Video[0]));
+		video = FileVideo.combineVideos(path, output, List.copyOf(v));
 		return video;
 	}
 

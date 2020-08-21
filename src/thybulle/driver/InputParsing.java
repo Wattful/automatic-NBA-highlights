@@ -146,7 +146,7 @@ public class InputParsing {
 
 	//Parses an array of dates into a collection of beginning and end dates.
 	private static Collection<Pair<LocalDate, LocalDate>> parseDateArray(JSONArray times){
-		Collection<Pair<LocalDate, LocalDate>> dates = new LinkedList<Pair<LocalDate, LocalDate>>();
+		Collection<Pair<LocalDate, LocalDate>> dates = new ArrayList<Pair<LocalDate, LocalDate>>();
 		for(Object o : times){
 			if(!(o instanceof String)){
 				throw new JSONException("Non-string in Dataset array: " + o.toString());
@@ -182,7 +182,7 @@ public class InputParsing {
 			if(beginning.isBefore(baseYear)){
 				throw new JSONException("Cannot parse seasons before " + baseYear.toString() + ": " + input);
 			}
-			Collection<Pair<LocalDate, LocalDate>> dates = new LinkedList<Pair<LocalDate, LocalDate>>();
+			Collection<Pair<LocalDate, LocalDate>> dates = new ArrayList<Pair<LocalDate, LocalDate>>();
 			for(int i = beginning.getValue(); i < end.getValue(); i++){
 				dates.addAll(parseSeason(Year.of(i), input.replace(yearIntervalPattern, "")));
 			}
@@ -203,7 +203,7 @@ public class InputParsing {
 
 	//Parses a collection of beginning and end dates from a Year (first year of the season), and info string according to the above specification.
 	private static Collection<Pair<LocalDate, LocalDate>> parseSeason(Year year, String info){
-		Collection<Pair<LocalDate, LocalDate>> dates = new LinkedList<Pair<LocalDate, LocalDate>>();
+		Collection<Pair<LocalDate, LocalDate>> dates = new ArrayList<Pair<LocalDate, LocalDate>>();
 		boolean detected = false;
 		int index = year.getValue() - baseYear.getValue();
 		info = info.toLowerCase();
@@ -237,9 +237,9 @@ public class InputParsing {
 	 */
 	public static Collection<Team> parseTeams(JSONArray t){
 		if(t == null){
-			return new LinkedList<Team>();
+			return new ArrayList<Team>();
 		}
-		Collection<Team> teams = new LinkedList<Team>();
+		Collection<Team> teams = new ArrayList<Team>();
 		for(Object o : t){
 			if(!(o instanceof String)){
 				throw new JSONException("Non-string in Team array: " + o.toString());
@@ -271,7 +271,7 @@ public class InputParsing {
 	 * @return
 	 */
 	public static Collection<Constraint> parseConstraints(JSONArray source){
-		Collection<Constraint> answer = new LinkedList<Constraint>();
+		Collection<Constraint> answer = new ArrayList<Constraint>();
 		for(Object o : source){
 			answer.add(parseConstraint(o));
 		}
@@ -297,9 +297,9 @@ public class InputParsing {
 		String s = jo.keys().next();
 		String constraintType = s.trim().toLowerCase();
 		if(constraintType.equals("or")){
-			return new OrConstraint(parseConstraints(jo.getJSONArray(s)).toArray(new Constraint[0]));
+			return new OrConstraint(parseConstraints(jo.getJSONArray(s)));
 		} else if(constraintType.equals("and")){
-			return new AndConstraint(parseConstraints(jo.getJSONArray(s)).toArray(new Constraint[0]));
+			return new AndConstraint(parseConstraints(jo.getJSONArray(s)));
 		} else if(constraintType.equals("not")){
 			return new NotConstraint(parseConstraint(jo.get(s)));
 		} else {

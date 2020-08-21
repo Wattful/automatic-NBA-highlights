@@ -14,13 +14,13 @@ public class OrConstraint implements Constraint {
 	/**Constructs a DisjunctiveConstraint consisting of the given constraints.
 	@param c The constraints to use.
 	@throws NullPointerException if c is null, or any parameter in c is null.
-	@throws IllegalArgumentException if c.length == 0
+	@throws IllegalArgumentException if c is empty
 	*/
-	public OrConstraint(Constraint... c){
-		if(c.length == 0){
+	public OrConstraint(Collection<? extends Constraint> c){
+		if(c.isEmpty()){
 			throw new IllegalArgumentException("No constraints were provided.");
 		}
-		constraints = Set.of(c);
+		constraints = Set.copyOf(c);
 	}
 
 	/**Returns the number of constraints in this DisjunctiveConstraint.<br>

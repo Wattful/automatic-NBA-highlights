@@ -9,8 +9,6 @@ In addition to implementing the Video interface, includes the option to delete t
 */
 
 public class FileVideo implements Video {
-	private static final boolean CHECK_REP = true;
-
 	private final File machineLocation;
 
 	/**Constructs a FileVideo pointing to the given File.
@@ -22,7 +20,6 @@ public class FileVideo implements Video {
 			throw new NullPointerException();
 		}
 		this.machineLocation = location;
-		checkRep();
 	}
 
 	/**Constructs a FileVideo pointing to the path in the given String.
@@ -34,16 +31,6 @@ public class FileVideo implements Video {
 			throw new NullPointerException();
 		}
 		this.machineLocation = new File(path);
-		checkRep();
-	}
-
-	private void checkRep(){
-		if(!CHECK_REP){
-			return;
-		}
-		if(this.machineLocation == null){
-			throw new IllegalStateException();
-		}
 	}
 
 	@Override
@@ -86,39 +73,39 @@ public class FileVideo implements Video {
 	@param location The location to save the video.
 	@param videos The videos to combine.
 	@throws NullPointerException if any argument is null.
-	@throws IllegalArgumentException if videos.length == 0.
+	@throws IllegalArgumentException if videos is empty.
 	@return a reference to the resulting video.
 	*/
-	public static FileVideo combineVideos(File location, Video... videos) throws IOException {
+	public static FileVideo combineVideos(File location, List<? extends Video> videos) throws IOException {
 		return combineVideos(location, new Logging(), videos);
 	}
 
-	/**This method is identical to the {@link #combineVideos(File, Video...) combineVideos} method,
+	/**This method is identical to the {@link #combineVideos(File, List<? extends Video>) combineVideos} method,
 	with the exception that useful information will be logged to output.<br>
 	This is useful for combineVideo calls with several videos, as these may take a very long time.
 	@param location The location to save the video.
 	@param output A logging object to output to.
 	@param videos The videos to combine.
 	@throws NullPointerException if any argument is null.
-	@throws IllegalArgumentException if videos.length == 0.
+	@throws IllegalArgumentException if videos is empty.
 	@return a reference to the resulting video.
 	*/
-	public static FileVideo combineVideos(File location, Logging output, Video... videos) throws IOException {
+	public static FileVideo combineVideos(File location, Logging output, List<? extends Video> videos) throws IOException {
 		if(location == null || videos == null){
 			throw new NullPointerException();
 		}
-		if(videos.length == 0){
-			throw new IllegalArgumentException("videos.length was 0.");
+		if(videos.isEmpty()){
+			throw new IllegalArgumentException("videos.size() was 0.");
 		}
 		StringBuilder s = new StringBuilder("");
-		output.info("Saving " + videos.length + (videos.length == 1 ? " video." : " videos."));
-		for(int i = 0; i < videos.length; i++){
-			if(videos[i] == null) {
+		output.info("Saving " + videos.size() + (videos.size() == 1 ? " video." : " videos."));
+		for(int i = 0; i < videos.size(); i++){
+			if(videos.get(i) == null) {
 				continue;
 			}
 			File f = File.createTempFile(String.format("%03d", i), ".mp4");
 			f.deleteOnExit();
-			FileVideo v = videos[i].save(f);
+			FileVideo v = videos.get(i).save(f);
 			output.info("Saved video " + (i + 1) + ".");
 			//sb.append(v.getLocation() + "|");
 			s.append("file '" + v.getFileLocation() + "'\n");

@@ -43,7 +43,7 @@ public interface GameSource extends Closeable{
 	@return a list of games corresponding to the provided GameInfos.
 	*/
 	default List<Game> getGames(Collection<GameInfo> gis) throws IOException {
-		List<Game> answer = new LinkedList<Game>();
+		List<Game> answer = new ArrayList<Game>();
 		for(GameInfo gi : gis){
 			answer.add(getGame(gi));
 		}
@@ -65,7 +65,7 @@ public interface GameSource extends Closeable{
 		if(beginning.equals(end)){
 			return this.getGameInformationOnDay(beginning);
 		}
-		List<GameInfo> answer = new LinkedList<GameInfo>();
+		List<GameInfo> answer = new ArrayList<GameInfo>();
 		for(int i = 0; i <= beginning.until(end, ChronoUnit.DAYS); i++){
 			LocalDate d = beginning.plusDays(i);
 			answer.addAll(this.getGameInformationOnDay(d));
@@ -81,11 +81,11 @@ public interface GameSource extends Closeable{
 	@throws IOException if an IO error occurs.
 	@return information for games played by the given teams on date
 	*/
-	default List<GameInfo> getTeamGameInformationOnDay(LocalDate date, Team... teams) throws IOException {
-		if(teams.length == 0){
+	default List<GameInfo> getTeamGameInformationOnDay(LocalDate date, Collection<? extends Team> teams) throws IOException {
+		if(teams.isEmpty()){
 			return this.getGameInformationOnDay(date);
 		}
-		List<GameInfo> answer = new LinkedList<GameInfo>();
+		List<GameInfo> answer = new ArrayList<GameInfo>();
 		for(GameInfo g : this.getGameInformationOnDay(date)){
 			for(Team team : teams){
 				if(g.hasTeam(team)){
@@ -106,8 +106,8 @@ public interface GameSource extends Closeable{
 	@throws IOException if an IO error occurs.
 	@return a list of all GameInfos played by the given team between the given dates, inclusive.	
 	*/
-	default List<GameInfo> getTeamGameInformationBetweenDates(LocalDate beginning, LocalDate end, Team... teams) throws IOException {
-		if(teams.length == 0){
+	default List<GameInfo> getTeamGameInformationBetweenDates(LocalDate beginning, LocalDate end, Collection<? extends Team> teams) throws IOException {
+		if(teams.isEmpty()){
 			return this.getGameInformationBetweenDates(beginning, end);
 		}
 		if(beginning.isAfter(end)){
@@ -116,7 +116,7 @@ public interface GameSource extends Closeable{
 		if(beginning.equals(end)){
 			return this.getTeamGameInformationOnDay(beginning, teams);
 		}
-		List<GameInfo> answer = new LinkedList<GameInfo>();
+		List<GameInfo> answer = new ArrayList<GameInfo>();
 		for(int i = 0; i <= beginning.until(end, ChronoUnit.DAYS); i++){
 			LocalDate d = beginning.plusDays(i);
 			List<GameInfo> g = this.getTeamGameInformationOnDay(d, teams);

@@ -20,7 +20,7 @@ public class HighlightsCompiler {
 	/**Constructs a HighlightsCompiler without any constraints or source games.
 	 */
 	HighlightsCompiler(){
-		sourceGames = new LinkedList<Game>();
+		sourceGames = new ArrayList<Game>();
 		constraintSet = new HashSet<Constraint>();
 	}
 
@@ -28,8 +28,8 @@ public class HighlightsCompiler {
 	@param g The games to get highlights from.
 	@return this, for method call chaining.
 	*/
-	public HighlightsCompiler addGames(Game... g){
-		List<Game> games = new LinkedList<Game>(Arrays.asList(g));
+	public HighlightsCompiler addGames(Collection<? extends Game> g){
+		List<Game> games = new ArrayList<Game>(g);
 		games.removeAll(Collections.singleton(null));
 		sourceGames.addAll(games);
 		return this;
@@ -39,8 +39,8 @@ public class HighlightsCompiler {
 	@param c The constraints to add.
 	@return this, for method call chaining.
 	*/
-	public HighlightsCompiler addConstraints(Constraint... c){
-		List<Constraint> constraints = new LinkedList<Constraint>(Arrays.asList(c));
+	public HighlightsCompiler addConstraints(Collection<? extends Constraint> c){
+		List<Constraint> constraints = new ArrayList<Constraint>(c);
 		constraints.removeAll(Collections.singleton(null));
 		constraintSet.addAll(constraints);
 		return this;
@@ -57,9 +57,9 @@ public class HighlightsCompiler {
 		if(constraintSet.isEmpty()){
 			throw new IllegalStateException("No constraints were specified.");
 		}
-		List<Play> plays = new LinkedList<Play>();
+		List<Play> plays = new ArrayList<Play>();
 		for(Game g : sourceGames){
-			plays.addAll(g.getAllPlaysThatSatisfy(constraintSet.toArray(new Constraint[0])));
+			plays.addAll(g.getAllPlaysThatSatisfy(constraintSet));
 		}
 		return new Highlights(plays);
 	}

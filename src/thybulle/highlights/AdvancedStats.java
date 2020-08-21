@@ -363,7 +363,7 @@ public class AdvancedStats implements GameSource {
 			int seconds = Integer.parseInt(secondsString);
 			Timestamp timestamp = new Timestamp(currentQuarter, (minutes * 60) + seconds);
 			Pair<List<UnparsedPlay>, List<UnparsedPlay>> playsAtTime = rawPlays.getOrDefault(timestamp, 
-					new Pair<List<UnparsedPlay>, List<UnparsedPlay>>(new LinkedList<UnparsedPlay>(), new LinkedList<UnparsedPlay>()));
+					new Pair<List<UnparsedPlay>, List<UnparsedPlay>>(new ArrayList<UnparsedPlay>(), new ArrayList<UnparsedPlay>()));
 			if(!awayPlay.equals("")){
 				playsAtTime.first().add(new UnparsedPlay(awayPlay, getPlayLink(e.getElementsByClass("play team vtm").get(0))));
 			}
@@ -388,7 +388,7 @@ public class AdvancedStats implements GameSource {
 	}
 
 	private List<AdvancedStatsPlay> JSONArrayToPlays(JSONArray input){
-		List<AdvancedStatsPlay> plays = new LinkedList<AdvancedStatsPlay>();
+		List<AdvancedStatsPlay> plays = new ArrayList<AdvancedStatsPlay>();
 		for(Object o : input){
 			if(!(o instanceof JSONObject)){
 				throw new JSONException("Invalid data json object.");
@@ -439,7 +439,7 @@ public class AdvancedStats implements GameSource {
 
 	private List<AdvancedStatsPlay> parseAllPlays(SortedMap<Timestamp, Pair<List<UnparsedPlay>, List<UnparsedPlay>>> rawPlays,
 		Collection<? extends Player> awayPlayers, Collection<? extends Player> homePlayers, Team awayTeam, Team homeTeam){
-		List<AdvancedStatsPlay> plays = new LinkedList<AdvancedStatsPlay>();
+		List<AdvancedStatsPlay> plays = new ArrayList<AdvancedStatsPlay>();
 		Score score = new Score(0, 0);
 		for(Timestamp t : rawPlays.keySet()){
 			Pair<List<UnparsedPlay>, List<UnparsedPlay>> unparsedPlayGroup = rawPlays.get(t);
@@ -467,10 +467,10 @@ public class AdvancedStats implements GameSource {
 	private Collection<AdvancedStatsPlay> parsePlays(Pair<List<UnparsedPlay>, List<UnparsedPlay>> unparsedPlayGroup, 
 				Collection<? extends Player> firstPlayers, Collection<? extends Player> secondPlayers, Team team, Timestamp timestamp, Score score){
 		
-		Collection<AdvancedStatsPlay> newPlays = new LinkedList<AdvancedStatsPlay>();
+		Collection<AdvancedStatsPlay> newPlays = new ArrayList<AdvancedStatsPlay>();
 		for(int i = 0; i < unparsedPlayGroup.first().size(); i++){
 			
-			Collection<AdvancedStatsPlay> newPlaysForThisUnparsedPlay = new LinkedList<AdvancedStatsPlay>();
+			Collection<AdvancedStatsPlay> newPlaysForThisUnparsedPlay = new ArrayList<AdvancedStatsPlay>();
 			eachPlayType: for(Pair<String, String> parsingPair : playTypeParsing.keySet()){
 				PlayType playType = playTypeParsing.get(parsingPair);
 				for(Play p : newPlaysForThisUnparsedPlay){
@@ -482,7 +482,7 @@ public class AdvancedStats implements GameSource {
 				if(i + 1 > unparsedPlayGroup.second().size() && parsingPair.second() != null){
 					continue;
 				}
-				List<String> playerLastNames = new LinkedList<String>();
+				List<String> playerLastNames = new ArrayList<String>();
 				Matcher matcher = Pattern.compile(parsingPair.first()).matcher(unparsedPlayGroup.first().get(i).rawPlay);
 				if(!matcher.matches()){
 					continue;
@@ -495,12 +495,12 @@ public class AdvancedStats implements GameSource {
 					}
 					playerLastNames.addAll(getAllGroups(matcher2));
 				}
-				Player[] players = new Player[playerLastNames.size()];
+				List<Player> players = new ArrayList<Player>(playerLastNames.size());
 				//logging.info(unparsedPlayGroup.first().get(i).rawPlay);
 				//logging.info(playType.toString());
 				//logging.info(playerLastNames.toString());
 				for(int j = 0; j < playerLastNames.size(); j++){
-					players[j] = guessPlayer(playerLastNames.get(j), firstPlayers, secondPlayers);
+					players.add(guessPlayer(playerLastNames.get(j), firstPlayers, secondPlayers));
 				}
 				
 				AdvancedStatsPlay asp = new AdvancedStatsPlay(this, unparsedPlayGroup.first().get(i).playLink, playType, timestamp, team, score, players);
@@ -515,7 +515,7 @@ public class AdvancedStats implements GameSource {
 	}
 
 	private Collection<String> getAllGroups(Matcher m){
-		Collection<String> answer = new LinkedList<String>();
+		Collection<String> answer = new ArrayList<String>();
 		for(int i = 1; i <= m.groupCount(); i++){
 			answer.add(m.group(i));
 		}
@@ -568,7 +568,7 @@ public class AdvancedStats implements GameSource {
 		Document dayPage = renderPage(url, DEFAULT_TIMEOUT, MINIMUM_TIMEOUT, ExpectedConditions.visibilityOfElementLocated(By.className("stats-video-status-page")));
 		Element dayPageBody = dayPage.body();
 		Elements games = dayPageBody.getElementsByAttribute("data-ng-repeat");
-		List<GameInfo> answer = new LinkedList<GameInfo>();
+		List<GameInfo> answer = new ArrayList<GameInfo>();
 		for(Element e : games){
 			Elements check = e.getElementsByClass("has-video");
 			if(check.size() == 0) {
@@ -611,7 +611,7 @@ public class AdvancedStats implements GameSource {
 	}
 
 	private List<GameInfo> JSONArrayToGameInfos(JSONArray input){
-		List<GameInfo> answer = new LinkedList<GameInfo>();
+		List<GameInfo> answer = new ArrayList<GameInfo>();
 		for(Object o : input){
 			if(!(o instanceof JSONObject)){
 				throw new JSONException("Invalid stored data.");
@@ -723,7 +723,7 @@ public class AdvancedStats implements GameSource {
 		private Video v;
 		private String videoLink;
 
-		private AdvancedStatsPlay(AdvancedStats stats, String link, PlayType playType, Timestamp timestamp, Team team, Score score, Player... player){
+		private AdvancedStatsPlay(AdvancedStats stats, String link, PlayType playType, Timestamp timestamp, Team team, Score score, List<? extends Player> player){
 			super(playType, timestamp, team, score, player);
 			this.source = stats;
 			this.playLink = link;
@@ -799,9 +799,9 @@ public class AdvancedStats implements GameSource {
 			Team team = Team.get(input.getString("team"));
 			Score score = Score.parse(input.getString("score"));
 			JSONArray arr = input.getJSONArray("players");
-			Player[] players = new Player[arr.length()];
+			List<Player> players = new ArrayList<Player>(arr.length());
 			for(int i = 0; i < arr.length(); i++){
-				players[i] = Player.parse(arr.getString(i));
+				players.add(Player.parse(arr.getString(i)));
 			}
 			return new AdvancedStatsPlay(stats, playLink, type, timestamp, team, score, players);
 		}

@@ -22,7 +22,7 @@ public class Game {
 	private final Team awayTeam;
 	private final Team homeTeam;
 
-	private final List<Play> data = new LinkedList<Play>();
+	private final List<Play> data = new ArrayList<Play>();
 
 	//Constructs a game from the given data. This constructor should only be called from the Source.getGame method.
 	Game(GameInfo gi, Collection<? extends Play> plays){
@@ -44,13 +44,13 @@ public class Game {
 	@throws NullPointerException if constraints is null, or any value in constraints is null.
 	@return a list of all plays which meet the given constraints.
 	*/
-	public List<Play> getAllPlaysThatSatisfy(Constraint... constraints){
+	public List<Play> getAllPlaysThatSatisfy(Collection<? extends Constraint> constraints){
 		return List.copyOf(this.constrain(new AndConstraint(constraints)));
 	}
 
 	//Returns a list of all plays in this game that meet the constraint.
 	private List<Play> constrain(Constraint constraint){
-		List<Play> answer = new LinkedList<Play>();
+		List<Play> answer = new ArrayList<Play>();
 		for(Play p : data){
 			if(constraint.satisfiedBy(p)){
 				answer.add(p);
