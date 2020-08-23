@@ -9,8 +9,6 @@ import java.time.LocalDate;
 import thybulle.highlights.*;
 import thybulle.misc.*;
 
-//Refactoring: Remove (most) varargs methods, Figure out how to parse broken games, change browser name to enum, fix and commit tests, start using ArrayList, change play field names
-
 public class Driver {
 	static final Logging logging = new Logging(System.out);
 

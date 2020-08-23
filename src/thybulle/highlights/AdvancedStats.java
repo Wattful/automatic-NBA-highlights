@@ -42,8 +42,8 @@ public class AdvancedStats implements GameSource {
 
 	private static final Browser browser;
 
-	private static final String DEFAULT_DATA_LOCATION = "./advancedstatsdata.json";
-	private static final String DEFAULT_CONFIG_PATH = "../config/advancedstatsconfig.json";
+	public static final String DEFAULT_DATA_LOCATION = "./advancedstatsdata.json";
+	public static final String DEFAULT_CONFIG_PATH = "../config/advancedstatsconfig.json";
 
 	private static final long DEFAULT_TIMEOUT = 10000;
 	private static final long VIDEO_TIMEOUT = 60000;
@@ -258,11 +258,12 @@ public class AdvancedStats implements GameSource {
 		return new AdvancedStats(read, write, readLocation, writeLocation);
 	}
 
-	/**Returns an AdvancedStats instance using the ./advancedstatsconfig.json config file to determine whether to read or write local data.
+	/**Returns an AdvancedStats instance using the given JSON object as a config file in accordance with the specification in the config README.
+	@param obj JSON object to read from.
+	@throws IOException if an IO error occurs.
 	@return an AdvancedStats instance.
 	*/
-	public static AdvancedStats open() throws IOException {
-		JSONObject obj = new JSONObject(FileUtils.fileToString(DEFAULT_CONFIG_PATH));
+	public static AdvancedStats open(JSONObject obj) throws IOException {
 		return new AdvancedStats(obj.getBoolean("read"), obj.getBoolean("write"), obj.optString("readLocation", DEFAULT_DATA_LOCATION), obj.optString("writeLocation", DEFAULT_DATA_LOCATION));
 	}
 

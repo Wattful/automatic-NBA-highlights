@@ -107,7 +107,7 @@ public class InputParsing {
 	 * @return the game Source specified by the playsrc key.
 	 */
 	public static GameSource parseSource(String inputFile) throws IOException {
-		return parseSource(new JSONObject(Files.readString(Path.of(inputFile))).getInt("playsrc"));
+		return parseSource(new JSONObject(FileUtils.fileToString(inputFile)).getInt("playsrc"));
 	}
 	
 	/**Returns the source corresponding to the given int according to the above specification.
@@ -117,7 +117,7 @@ public class InputParsing {
 	 */
 	public static GameSource parseSource(int src) throws IOException {
 		if(src == 0){
-			return AdvancedStats.open();
+			return AdvancedStats.open(new JSONObject(FileUtils.fileToString(AdvancedStats.DEFAULT_CONFIG_PATH)));
 		} else {
 			throw new JSONException("Unrecognized play-by-play source: " + src);
 		}
@@ -132,7 +132,7 @@ public class InputParsing {
 	@return a collection of pairs of dates indicating which games should be included.
 	*/
 	public static Collection<Pair<LocalDate, LocalDate>> parseDataset(String inputFile) throws IOException {
-		return parseDataset(new JSONObject(Files.readString(Path.of(inputFile))).getJSONArray("dataset"));
+		return parseDataset(new JSONObject(FileUtils.fileToString(inputFile)).getJSONArray("dataset"));
 	}
 	
 	/**Returns a collection of pairs of dates given a JSON array according to the above specification.
@@ -226,7 +226,7 @@ public class InputParsing {
 	 * @return a collection of team according to the above specification.
 	 */
 	public static Collection<Team> parseTeams(String inputFile) throws IOException {
-		return parseTeams(new JSONObject(Files.readString(Path.of(inputFile))).getJSONArray("datasetteam"));
+		return parseTeams(new JSONObject(FileUtils.fileToString(inputFile)).getJSONArray("datasetteam"));
 	}
 	
 	/**Returns a collection of team given a JSONArray according to the above specification.
@@ -261,7 +261,7 @@ public class InputParsing {
 	@return all of the described constraints.
 	*/
 	public static Collection<Constraint> parseConstraints(String inputFile) throws IOException {
-		return parseConstraints(new JSONObject(Files.readString(Path.of(inputFile))).getJSONArray("constraints"));
+		return parseConstraints(new JSONObject(FileUtils.fileToString(inputFile)).getJSONArray("constraints"));
 	}
 
 	/**Parses the given JSON array and returns constraints according to the above specification.
