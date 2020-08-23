@@ -116,16 +116,6 @@ public class Browser {
 		return this.executablePath;
 	}
 
-	/**Returns a Browser object constructed from the given JSON config file according to the specification above.
-	@throws IOException if an IO error occurs.
-	@throws NullPointerException if any parameter is null.
-	@throws JSONException if any required keys are missing.
-	@return a Browser object constructed from the given JSON config file according to the specification above.
-	*/
-	public static Browser fromConfigFile(String configPath) throws IOException {
-		return fromJSONObject(new JSONObject(Files.readString(Path.of(configPath))));
-	}
-
 	/**Returns a Browser object constructed from the given JSON object according to the specification above.
 	@throws NullPointerException if any parameter is null.
 	@throws JSONException if any required keys are missing.

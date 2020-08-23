@@ -205,7 +205,7 @@ public class AdvancedStats implements GameSource {
 
 	static {
 		try{
-			browser = Browser.fromConfigFile(Browser.DEFAULT_CONFIG_PATH);
+			browser = Browser.fromJSONObject(new JSONObject(FileUtils.fileToString(Browser.DEFAULT_CONFIG_PATH)));
 		} catch(IOException e){
 			throw new java.io.UncheckedIOException(e);
 		}
@@ -262,7 +262,7 @@ public class AdvancedStats implements GameSource {
 	@return an AdvancedStats instance.
 	*/
 	public static AdvancedStats open() throws IOException {
-		JSONObject obj = new JSONObject(Files.readString(Path.of(DEFAULT_CONFIG_PATH)));
+		JSONObject obj = new JSONObject(FileUtils.fileToString(DEFAULT_CONFIG_PATH));
 		return new AdvancedStats(obj.getBoolean("read"), obj.getBoolean("write"), obj.optString("readLocation", DEFAULT_DATA_LOCATION), obj.optString("writeLocation", DEFAULT_DATA_LOCATION));
 	}
 
@@ -665,9 +665,7 @@ public class AdvancedStats implements GameSource {
 	//If in write mode, flushes the current JSON data
 	private void flush() throws IOException {
 		if(this.write){
-			try (PrintStream out = new PrintStream(new FileOutputStream(this.writeLocation))) {
-    			out.print(this.data.toString());
-			}
+			FileUtils.write(this.writeLocation, this.data.toString());
 		}
 	}
 	
