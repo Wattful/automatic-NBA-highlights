@@ -528,12 +528,22 @@ public class AdvancedStats implements GameSource {
 		lastName = lastName.toLowerCase();
 		//System.out.println(lastName);
 		for(Player p : firstPlayers){
-			if(p.lastName().equals(lastName) || p.initialedName().contentEquals(lastName)){
+			if(p.lastName().equals(lastName) || p.initialedName().equals(lastName)){
 				return p;
 			}
 		}
 		for(Player p : secondPlayers){
-			if(p.lastName().equals(lastName) || p.initialedName().contentEquals(lastName)){
+			if(p.lastName().equals(lastName) || p.initialedName().equals(lastName)){
+				return p;
+			}
+		}
+		for(Player p : firstPlayers){
+			if(p.lastName().contains(lastName) || lastName.contains(p.lastName())){
+				return p;
+			}
+		}
+		for(Player p : secondPlayers){
+			if(p.lastName().contains(lastName) || lastName.contains(p.lastName())){
 				return p;
 			}
 		}
