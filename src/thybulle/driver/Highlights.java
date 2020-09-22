@@ -50,7 +50,7 @@ public class Highlights {
 		}
 		output.info("Finished resolving play videos.");
 		//@SuppressWarnings("unchecked")
-		video = FileVideo.combineVideos(path, output, List.copyOf(v));
+		video = FileVideo.combineVideos(path, output, new ArrayList<Video>(v));
 		return video;
 	}
 
